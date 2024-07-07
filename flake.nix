@@ -22,17 +22,11 @@
             docs = import ./docs { inherit pkgs inputs lib; };
             palette-generator = pkgs.callPackage ./palette-generator { };
           };
-
-          # Testbeds are virtual machines based on NixOS, therefore they are
-          # only available for Linux systems.
-          testbedPackages = lib.optionalAttrs
-            (lib.hasSuffix "-linux" system)
-            (import ./stylix/testbed.nix { inherit pkgs inputs lib; });
         in
           universalPackages // testbedPackages
       );
 
-      nixosModules.stylix = { pkgs, ... }@inputs: {
+      nixosModules.nixtun = { pkgs, ... }@inputs: {
         imports = [
 	  ./yubikey-gpg.nix
         ];

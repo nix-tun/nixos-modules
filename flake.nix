@@ -17,11 +17,6 @@
         let
           inherit (nixpkgs) lib;
           pkgs = nixpkgs.legacyPackages.${system};
-
-          universalPackages = {
-            docs = import ./docs { inherit pkgs inputs lib; };
-            palette-generator = pkgs.callPackage ./palette-generator { };
-          };
         in
           universalPackages // testbedPackages
       );

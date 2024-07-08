@@ -1,14 +1,19 @@
-{ config, lib, pkgs, ... } : {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options = {
-    nix-tun.yubikey-gpg.enable = lib.mkEnableOption "Enable Yubikey and GPG Support";
+    nix-tun.yubikey-gpg.enable = lib.mkEnableOption "Enable Yubikey GPG Support";
   };
 
-  config = lib.mkIf config.jamesofscout.yubikey-gpg.enable {
-
+  config = lib.mkIf config.nix-tun.yubikey-gpg.enable {
     environment.systemPackages = with pkgs; [
       yubikey-personalization
       gnupg
     ];
+
     services.udev.packages = with pkgs; [
       yubikey-personalization
     ];
@@ -26,7 +31,5 @@
       export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
       echo UPDATESTARTUPTTY | gpg-connect-agent
     '';
-
   };
-  
 }

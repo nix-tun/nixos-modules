@@ -1,31 +1,25 @@
 {
-  description = "A collection of NixOs Modules";
+  description = "A collection of NixOS Modules";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    ...
-  } @ inputs: {
-    packages =
-      nixpkgs.lib.genAttrs [
-        "aarch64-darwin"
-        "aarch64-linux"
-        "i686-linux"
-        "x86_64-darwin"
-        "x86_64-linux"
-      ] (
-        system: let
-          inherit (nixpkgs) lib;
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-          universalPackages // testbedPackages
-      );
+  outputs = {nixpkgs, ...} @ inputs: let
+    systems = [
+      "x86_64-linux"
+      "x86_64-darwin"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
 
-    nixosModules.nix-tun = {pkgs, ...} @ inputs: {
+    lib = nixpkgs.lib;
+
+    forAllSystems = lib.genAttrs systems;
+  in {
+    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+
+    nixosModules.nix-tun = {pkgs, ...}: {
       imports = [
         ./yubikey-gpg.nix
       ];

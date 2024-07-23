@@ -89,7 +89,7 @@ let opts = config.nix-tun.storage.persist; in {
 
   config = lib.mkIf opts.enable {
     nix-tun.storage.persist.subvolumes = {
-        system = {
+        system.directories = {
 	  "/var/log" = {};
 	  "/var/lib/nixos" = {}; # For Correct User Mapping
 	  "/var/lib/systemd/coredump" = {};

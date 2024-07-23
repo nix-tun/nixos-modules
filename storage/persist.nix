@@ -152,13 +152,13 @@ let opts = config.nix-tun.storage.persist; in {
       {
         bits = 4096;
         openSSHFormat = true;
-        path = "${opts.default}/ssh-keys/ssh_host_rsa_key";
+        path = "${opts.path}/ssh-keys/ssh_host_rsa_key";
         rounds = 100;
         type = "rsa";
       }
       {
         comment = "key comment";
-        path = "${opts.default}/ssh-keys/ssh_host_ed25519_key";
+        path = "${opts.path}/ssh-keys/ssh_host_ed25519_key";
         rounds = 100;
         type = "ed25519";
       }

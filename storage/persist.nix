@@ -88,7 +88,7 @@ let opts = config.nix-tun.storage.persist; in {
   };
 
   config = lib.mkIf opts.enable {
-    nix-tun.subvolumes = {
+    nix-tun.storage.persist.subvolumes = {
         system = {
 	  "/var/log" = {};
 	  "/var/lib/nixos" = {}; # For Correct User Mapping

@@ -139,7 +139,7 @@ let opts = config.nix-tun.storage.persist; in {
         name = "${opts.path}/${name}";
 	value = {
 	  subvolume = "/";
-	  snapshot_dir = ".snapshot";
+	  snapshot_dir = ".snapshots";
 	};
       }) opts.subvolumes;
     };

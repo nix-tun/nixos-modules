@@ -22,6 +22,7 @@
     nixosModules.nix-tun = {pkgs, ...}: {
       imports = [
         ./yubikey-gpg.nix
+        ./storage/persists.nix
       ];
     };
   };

@@ -2,13 +2,9 @@
   pkgs,
   config,
   lib,
-  inputs,
   ...
 }:
 let opts = config.nix-tun.storage.persist; in {
-  imports = [
-    inputs.impermanence.nixosModules.impermanence
-  ];
 
   options.nix-tun.storage.persist = {
     enable = lib.mkEnableOption ''

@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    impermanence.url = "github:nix-community/impermanence";
   };
 
   outputs = {nixpkgs, ...} @ inputs: let
@@ -22,6 +23,7 @@
     nixosModules.nix-tun = {pkgs, ...}: {
       imports = [
         ./yubikey-gpg.nix
+	inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
       ];
     };

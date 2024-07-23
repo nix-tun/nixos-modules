@@ -5,7 +5,7 @@
   inputs,
   ...
 }:
-let opts = config.nix-tun.storage.persist in {
+let opts = config.nix-tun.storage.persist; in {
   imports = [
     inputs.impermanence.nixosModules.impermanence
   ];

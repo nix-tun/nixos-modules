@@ -131,8 +131,8 @@ let opts = config.nix-tun.storage.persist; in {
     }) (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
     services.btrbk.instances.btrbk.settings  = {
-      snapshot_preserve = "7d 4w 4m";
-      snapshot_preserve_min = "7d 4w 4m";
+      snapshot_preserve = "7d";
+      snapshot_preserve_min = "7d";
       timestamp_format = "long-iso";
 
       volume = lib.attrsets.mapAttrs' (name: value: {

@@ -145,7 +145,7 @@ let opts = config.nix-tun.storage.persist; in {
 	  subvolume = "/";
 	  snapshot_dir = ".snapshots";
 	};
-      }) opts.subvolumes;
+      }) (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
     };
 
     services.openssh.hostKeys = [

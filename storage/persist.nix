@@ -80,6 +80,15 @@ let opts = config.nix-tun.storage.persist; in {
         };
       }));
       default = {
+      };
+      description = ''
+        Subvolumes that should be persistent.
+      '';
+    };
+  };
+
+  config = lib.mkIf opts.enable {
+    nix-tun.subvolumes = {
         system = {
 	  "/var/log" = {};
 	  "/var/lib/nixos" = {}; # For Correct User Mapping
@@ -89,14 +98,9 @@ let opts = config.nix-tun.storage.persist; in {
 	ssh-keys = {
 	  backup = false;
 	};
-      };
-      description = ''
-        Subvolumes that should be persistent.
-      '';
-    };
-  };
 
-  config = lib.mkIf opts.enable {
+    };
+
     systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (
       name: value: 
       [

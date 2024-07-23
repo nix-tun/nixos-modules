@@ -112,7 +112,7 @@ let opts = config.nix-tun.storage.persist; in {
     environment.persistence = lib.mapAttrs' (name: value: 
     {
       name = "${opts.path}/${name}";
-      value.settings = {
+      value = {
 	hideMounts = true;
 	directories = lib.mapAttrsToList (name: value:
 	  {
@@ -130,7 +130,7 @@ let opts = config.nix-tun.storage.persist; in {
       };
     }) (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
-    services.btrbk.instances.btrbk = {
+    services.btrbk.instances.btrbk.settings  = {
       snapshot_preserve = "7d 4w 4m";
       snapshot_preserve_min = "7d 4w 4m";
       timestamp_format = "long-iso";

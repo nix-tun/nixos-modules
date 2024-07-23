@@ -112,7 +112,7 @@ let opts = config.nix-tun.storage.persist; in {
     environment.persistence = lib.mapAttrs' (name: value: 
     {
       name = "${opts.path}/${name}";
-      value = {
+      value.settings = {
 	hideMounts = true;
 	directories = lib.mapAttrsToList (name: value:
 	  {

@@ -142,7 +142,7 @@ let opts = config.nix-tun.storage.persist; in {
       volume = lib.attrsets.mapAttrs' (name: value: {
         name = "${opts.path}/${name}";
 	value = {
-	  subvolume = "/";
+	  subvolume = "${opts.path}/${name}";
 	  snapshot_dir = ".snapshots";
 	};
       }) (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);

@@ -89,11 +89,14 @@ let opts = config.nix-tun.storage.persist; in {
 
   config = lib.mkIf opts.enable {
     nix-tun.storage.persist.subvolumes = {
-        system.directories = {
-	  "/var/log" = {};
-	  "/var/lib/nixos" = {}; # For Correct User Mapping
-	  "/var/lib/systemd/coredump" = {};
-	  "/etc/NetworkManager/system-connections/" = (lib.mkIf config.networking.networkmanager.enable {});
+        system = {
+	  directories = {
+	    "/var/log" = {};
+	    "/var/lib/nixos" = {}; # For Correct User Mapping
+	    "/var/lib/systemd/coredump" = {};
+	    "/etc/NetworkManager/system-connections/" = (lib.mkIf config.networking.networkmanager.enable { mode = "0700"; });
+	  };
+	  bindMountDirectories = true;
 	};
 	# Storage for the SSH Host Keys - Are not part of the backup
 	ssh-keys = {

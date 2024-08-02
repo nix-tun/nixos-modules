@@ -93,6 +93,7 @@ let opts = config.nix-tun.storage.persist; in {
 	  "/var/log" = {};
 	  "/var/lib/nixos" = {}; # For Correct User Mapping
 	  "/var/lib/systemd/coredump" = {};
+	  "/etc/NetworkManager/system-connections/" = (lib.mkIf config.networking.networkmanager.enable {});
 	};
 	# Storage for the SSH Host Keys - Are not part of the backup
 	ssh-keys = {

@@ -37,7 +37,7 @@
         servers = [ "http://${config.containers.inphimatrix.config.networking.hostName}:8008" ];
       };
 
-      containers."${opts.servername}" = {
+      containers."matrix-${opts.servername}" = {
         ephemeral = true;
         autoStart = true;
         #privateNetwork = true;

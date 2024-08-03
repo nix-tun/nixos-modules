@@ -27,7 +27,7 @@
 
       nix-tun.storage.persist.subvolumes."${opts.servername}".directories = {
         "/postgres" = {
-          owner = "${builtins.toString config.containers."${opts.servername}".config.users.users.postgres.uid}";
+          owner = "${builtins.toString config.containers."matrix-${opts.servername}".config.users.users.postgres.uid}";
           mode = "0700";
         };
       };
@@ -44,7 +44,7 @@
         #hostAddress = "192.168.105.10";
         #localAddress = "192.168.105.11";
         extraFlags = [
-	  "--network-zone=${opts.servername}"
+	  "--network-zone=matrix-${opts.servername}"
 	];
 	bindMounts =
           {

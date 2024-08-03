@@ -25,6 +25,8 @@
         ./yubikey-gpg.nix
 	inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
+	./services/matrix.nix
+	./services/traefik.nix
       ];
     };
   };

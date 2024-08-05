@@ -34,7 +34,7 @@
 
       nix-tun.services.traefik.services."{opts.servername}" = {
         router.rule = "Host(`matrix.${opts.servername}`) || (Host(`${opts.servername}`) && (Path(`/_matrix/{name:.*}`) || Path(`/_synapse/{name:.*}`) || Path(`/.well-known/matrix/server`) || Path(`/.well-known/matrix/client`)))";
-        servers = [ "http://${config.containers."matrix-${opts.servername}".config.networking.hostName}:8008" ];
+        servers = [ ("http://" + config.containers."matrix-${opts.servername}".config.networking.hostName + ":8008") ];
       };
 
       containers."matrix-${opts.servername}" = {

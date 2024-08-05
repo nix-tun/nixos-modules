@@ -54,7 +54,7 @@
                 mountPoint = config.sops.secrets.matrix_pass.path;
               };
             "db" = {
-              hostPath = "${config.nix-tun.storage.persist.path}/inphimatrix/postgres";
+              hostPath = "${config.nix-tun.storage.persist.path}/matrix-${opts.servername}/postgres";
               mountPoint = "/var/lib/postgres";
               isReadOnly = false;
             };

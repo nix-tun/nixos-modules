@@ -44,7 +44,7 @@
         #hostAddress = "192.168.105.10";
         #localAddress = "192.168.105.11";
         extraFlags = [
-	  "--network-zone=matrix-${opts.servername}"
+	  "--network-zone=mx${opts.servername}"
 	];
 	bindMounts =
           {

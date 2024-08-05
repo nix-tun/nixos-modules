@@ -40,12 +40,9 @@
       containers."matrix-${opts.servername}" = {
         ephemeral = true;
         autoStart = true;
-        #privateNetwork = true;
+        privateNetwork = true;
         hostAddress = "192.168.105.10";
         localAddress = "192.168.105.11";
-        extraFlags = [
-	  "--network-zone=mx${opts.servername}"
-	];
 	bindMounts =
           {
             "secret" =

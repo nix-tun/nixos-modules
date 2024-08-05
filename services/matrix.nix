@@ -25,7 +25,7 @@
         mode = "444";
       };
 
-      nix-tun.storage.persist.subvolumes."${opts.servername}".directories = {
+      nix-tun.storage.persist.subvolumes."matrix-${opts.servername}".directories = {
         "/postgres" = {
           owner = "${builtins.toString config.containers."matrix-${opts.servername}".config.users.users.postgres.uid}";
           mode = "0700";

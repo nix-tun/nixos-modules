@@ -27,7 +27,7 @@
 
       nix-tun.storage.persist.subvolumes."matrix-${opts.servername}".directories = {
         "/postgres" = {
-          owner = "${builtins.toString config.containers."matrix-${opts.servername}".config.users.users.postgres.uid}";
+          owner = builtins.toString (config.containers."matrix-${opts.servername}".config.users.users.postgres.uid);
           mode = "0700";
         };
       };
@@ -41,8 +41,8 @@
         ephemeral = true;
         autoStart = true;
         #privateNetwork = true;
-        #hostAddress = "192.168.105.10";
-        #localAddress = "192.168.105.11";
+        hostAddress = "192.168.105.10";
+        localAddress = "192.168.105.11";
         extraFlags = [
 	  "--network-zone=mx${opts.servername}"
 	];

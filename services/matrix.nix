@@ -1,8 +1,9 @@
-{ lib
-, config
-, inputs
-, pkgs
-, ...
+{
+  lib,
+  config,
+  inputs,
+  pkgs,
+  ...
 }: {
   options.nix-tun.services.matrix = {
     enable = lib.mkEnableOption "setup inphimatrix";
@@ -11,30 +12,26 @@
       default = "";
       description = "Servername for matrix. The Matrix Host will be matrix.servername, except for .well-known files";
     };
-    secretsFile = lib.mkOption {
-      type = lib.types.path;
-      description = "path to the sops secret file for the fscshhude website Server";
-    };
   };
-  config =
-    let
-      opts = config.nix-tun.services.matrix;
-    in
+  config = let
+    opts = config.nix-tun.services.matrix;
+  in
     lib.mkIf opts.enable {
       sops.secrets.matrix_pass = {
         mode = "444";
       };
 
-      nix-tun.storage.persist.subvolumes."${opts.servername}".directories = {
-        "/postgres" = {
-          owner = "${builtins.toString config.containers."matrix-${opts.servername}".config.users.users.postgres.uid}";
+      nix-tun.utils.containers."matrix-${opts.servername}".volumes = {
+        "postgrs" = {
+          path = "/postgres";
+          owner = "postgres";
           mode = "0700";
         };
       };
 
       nix-tun.services.traefik.services."{opts.servername}" = {
         router.rule = "Host(`matrix.${opts.servername}`) || (Host(`${opts.servername}`) && (Path(`/_matrix/{name:.*}`) || Path(`/_synapse/{name:.*}`) || Path(`/.well-known/matrix/server`) || Path(`/.well-known/matrix/client`)))";
-        servers = [ "http://${config.containers.inphimatrix.config.networking.hostName}:8008" ];
+        servers = ["http://${config.containers.inphimatrix.config.networking.hostName}:8008"];
       };
 
       containers."matrix-${opts.servername}" = {
@@ -44,23 +41,25 @@
         #hostAddress = "192.168.105.10";
         #localAddress = "192.168.105.11";
         extraFlags = [
-	  "--network-zone=mx${opts.servername}"
-	];
-	bindMounts =
-          {
-            "secret" =
-              {
-                hostPath = config.sops.secrets.matrix_pass.path;
-                mountPoint = config.sops.secrets.matrix_pass.path;
-              };
-            "db" = {
-              hostPath = "${config.nix-tun.storage.persist.path}/inphimatrix/postgres";
-              mountPoint = "/var/lib/postgres";
-              isReadOnly = false;
-            };
+          "--network-zone=mx${opts.servername}"
+        ];
+        bindMounts = {
+          "secret" = {
+            hostPath = config.sops.secrets.matrix_pass.path;
+            mountPoint = config.sops.secrets.matrix_pass.path;
           };
+          "db" = {
+            hostPath = "${config.nix-tun.storage.persist.path}/inphimatrix/postgres";
+            mountPoint = "/var/lib/postgres";
+            isReadOnly = false;
+          };
+        };
 
-        config = { config, lib, ... }: {
+        config = {
+          config,
+          lib,
+          ...
+        }: {
           # enable postgres
           services.postgresql = {
             enable = true;
@@ -88,20 +87,22 @@
             settings = with config.services.coturn; {
               enable_registration = true;
               enable_registration_without_verification = true;
-              turn_uris = [ "turn:${realm}:3478?transport=udp" "turn:${realm}:3478?transport=tcp" ];
+              turn_uris = ["turn:${realm}:3478?transport=udp" "turn:${realm}:3478?transport=tcp"];
               turn_shared_secret = static-auth-secret-file;
               turn_user_lifetime = "1h";
               listeners = [
                 {
                   port = 8008;
-                  bind_addresses = [ "0.0.0.0" ];
+                  bind_addresses = ["0.0.0.0"];
                   type = "http";
                   tls = false;
                   x_forwarded = true;
-                  resources = [{
-                    names = [ "client" "federation" ];
-                    compress = true;
-                  }];
+                  resources = [
+                    {
+                      names = ["client" "federation"];
+                      compress = true;
+                    }
+                  ];
                 }
               ];
             };
@@ -145,22 +146,20 @@
             '';
           };
           # open the firewall
-          networking.firewall =
-            let
-              range = with config.services.coturn; lib.singleton {
+          networking.firewall = let
+            range = with config.services.coturn;
+              lib.singleton {
                 from = min-port;
                 to = max-port;
               };
-            in
-            {
-              allowedUDPPortRanges = range;
-              allowedUDPPorts = [ 3478 5349 ];
-              allowedTCPPortRanges = [ ];
-              allowedTCPPorts = [ 80 443 8008 3478 5349 ];
-            };
+          in {
+            allowedUDPPortRanges = range;
+            allowedUDPPorts = [3478 5349];
+            allowedTCPPortRanges = [];
+            allowedTCPPorts = [80 443 8008 3478 5349];
+          };
           system.stateVersion = "23.11";
         };
       };
-
     };
 }

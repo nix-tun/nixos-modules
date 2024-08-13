@@ -3,24 +3,23 @@
   config,
   lib,
   ...
-}:
-let opts = config.nix-tun.storage.persist; in {
-
+}: let
+  opts = config.nix-tun.storage.persist;
+in {
   options.nix-tun.storage.persist = {
     enable = lib.mkEnableOption ''
-      A wrapper arround impermanence and btrbk. Expects a btrfs filesystem with the following layout:
-	- /root <- The actual root mounted at / 
-	- /nix <- The root for all things nix. Mounted at /nix
-	- /persist <- The root of all other persistent storage, mounted at /persist
+           A wrapper arround impermanence and btrbk. Expects a btrfs filesystem with the following layout:
+      - /root <- The actual root mounted at /
+      - /nix <- The root for all things nix. Mounted at /nix
+      - /persist <- The root of all other persistent storage, mounted at /persist
 
-      *Note*: For systems that use more than one (logical) drive, simply mount more  
+           *Note*: For systems that use more than one (logical) drive, simply mount more
     '';
-    persistentFullHome = lib.mkEnableOption "Enable if simply all of Home should be Persistent";
     path = lib.mkOption {
       type = lib.types.str;
       default = "/persist";
       description = ''
-      The root directory for all of non generated persistent storage, except /nix and /boot. 
+        The root directory for all of non generated persistent storage, except /nix and /boot.
       '';
     };
     subvolumes = lib.mkOption {
@@ -50,33 +49,35 @@ let opts = config.nix-tun.storage.persist; in {
             default = true;
             description = "Whether this subvolume should be backuped, default is true";
           };
-	  bindMountDirectories = lib.mkOption {
-	    type = lib.types.bool;
-	    default = false;
-	    description = ''
-	    Should all directoris inside this subvolume be bind-mounted to their respective paths in / (according to their name). 
-	    '';
-	  };
-	  directories = lib.mkOption {
-	    type = lib.types.attrsOf( lib.types.submodule ({...} : {
-	      options = {
-	      owner = lib.mkOption {
-	        type = lib.types.str; default = "root"; };
-	      group = lib.mkOption {
-	        type = lib.types.str;
-		default = "root";
-	      };
-	      mode = lib.mkOption {
-	        type = lib.types.str;
-	        default = "0755";
-	      };
-	      };
-	    }));
-	    default = {};
-	    description = ''
-	      Directories that should be created per default inside the subvolume
-	    '';
-	  };
+          bindMountDirectories = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Should all directoris inside this subvolume be bind-mounted to their respective paths in / (according to their name).
+            '';
+          };
+          directories = lib.mkOption {
+            type = lib.types.attrsOf (lib.types.submodule ({...}: {
+              options = {
+                owner = lib.mkOption {
+                  type = lib.types.str;
+                  default = "root";
+                };
+                group = lib.mkOption {
+                  type = lib.types.str;
+                  default = "root";
+                };
+                mode = lib.mkOption {
+                  type = lib.types.str;
+                  default = "0755";
+                };
+              };
+            }));
+            default = {};
+            description = ''
+              Directories that should be created per default inside the subvolume
+            '';
+          };
         };
       }));
       default = {
@@ -88,70 +89,75 @@ let opts = config.nix-tun.storage.persist; in {
   };
 
   config = lib.mkIf opts.enable {
+    # Default Persistent Subvolumes, these are normally needed for all Systems
     nix-tun.storage.persist.subvolumes = {
-        system = {
-	  directories = {
-	    "/var/log" = {};
-	    "/var/lib/nixos" = {}; # For Correct User Mapping
-	    "/var/lib/systemd/coredump" = {};
-	    "/etc/NetworkManager/system-connections/" = (lib.mkIf config.networking.networkmanager.enable { mode = "0700"; });
-	  };
-	  bindMountDirectories = true;
-	};
-	# Storage for the SSH Host Keys - Are not part of the backup
-	ssh-keys = {
-	  backup = false;
-	};
-
+      system = {
+        directories = {
+          # The System Log should be persistent accross Reboots
+          "/var/log" = {};
+          "/var/lib/nixos" = {}; # For Correct User Mapping
+          "/var/lib/systemd/coredump" = {};
+          "/etc/NetworkManager/system-connections/" = lib.mkIf config.networking.networkmanager.enable {mode = "0700";};
+        };
+        bindMountDirectories = true;
+      };
+      # Storage for the SSH Host Keys - Are not part of the backup
+      ssh-keys = {
+        backup = false;
+      };
     };
 
+    # Generates the Directories inside the impermanence module
     systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (
-      name: value: 
-      [
-	"v ${opts.path}/${name} ${value.mode} ${value.owner} ${value.group} -"
-	(lib.mkIf value.backup "d ${opts.path}/${name}/.snapshots ${value.mode} ${value.owner} ${value.group} -")
-      ] 
-      ++ lib.attrsets.mapAttrsToList (n: v:
-        "d ${opts.path}/${name}/${n} ${v.mode} ${v.owner} ${v.group} -"
-      ) value.directories
-    )
-    opts.subvolumes);
+        name: value:
+          [
+            "v ${opts.path}/${name} ${value.mode} ${value.owner} ${value.group} -"
+            (lib.mkIf value.backup "d ${opts.path}/${name}/.snapshots ${value.mode} ${value.owner} ${value.group} -")
+          ]
+          ++ lib.attrsets.mapAttrsToList (
+            n: v: "d ${opts.path}/${name}/${n} ${v.mode} ${v.owner} ${v.group} -"
+          )
+          value.directories
+      )
+      opts.subvolumes);
 
-    environment.persistence = lib.mapAttrs' (name: value: 
-    {
+    environment.persistence = lib.mapAttrs' (name: value: {
       name = "${opts.path}/${name}";
       value = {
-	hideMounts = true;
-	directories = lib.mapAttrsToList (name: value:
-	  {
-	    directory = name;
-	    user = value.owner;
-	    group = value.group;
-	    mode = value.mode;
-	  }
-	  #(lib.mkIf config.nix-tun.storage.persist.persistentFullHome "/home")
-	  #(lib.mkIf config.networking.networkmanager.enable "/etc/NetworkManager/system-connections")
-	  #(lib.mkIf config.services.printing.enable "/var/lib/cups")
-	) value.directories;
-	files = [
-	];
+        hideMounts = true;
+        directories =
+          lib.mapAttrsToList (
+            name: value: {
+              directory = name;
+              user = value.owner;
+              group = value.group;
+              mode = value.mode;
+            }
+            #(lib.mkIf config.networking.networkmanager.enable "/etc/NetworkManager/system-connections")
+            #(lib.mkIf config.services.printing.enable "/var/lib/cups")
+          )
+          value.directories;
+        files = [
+        ];
       };
     }) (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
-    services.btrbk.instances.btrbk.settings  = {
+    # Automatically snapshots the Persistent Subvolumes
+    services.btrbk.instances.btrbk.settings = {
       snapshot_preserve = "7d";
       snapshot_preserve_min = "7d";
       timestamp_format = "long-iso";
 
       volume = lib.attrsets.mapAttrs' (name: value: {
         name = "${opts.path}/${name}";
-	value = {
-	  subvolume = "${opts.path}/${name}";
-	  snapshot_dir = ".snapshots";
-	};
+        value = {
+          subvolume = "${opts.path}/${name}";
+          snapshot_dir = ".snapshots";
+        };
       }) (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
     };
 
+    # Exists always because it is needed for SOPS and openssh
     services.openssh.hostKeys = [
       {
         bits = 4096;
@@ -169,4 +175,3 @@ let opts = config.nix-tun.storage.persist; in {
     ];
   };
 }
-

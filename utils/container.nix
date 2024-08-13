@@ -13,6 +13,9 @@
             description = ''
               Directories to autmatically create in Persistent Storage, and Bind Mount inside the container
             '';
+	    default = {};
+	    type = lib.types.attrsOf (lib.types.submodule ({ ...} : {
+	    options = {
             owner = lib.mkOption {
               type = lib.types.str;
               description = ''
@@ -25,6 +28,7 @@
               description = ''
                 The name of the group of the Directory. (of a group inside the container)
               '';
+	      default = "root";
             };
             mode = lib.mkOption {
               type = lib.types.str;
@@ -39,7 +43,9 @@
                 The path inside the container, where the directory should be bind mounted.
               '';
             };
-          };
+	    };
+	    }));
+	  };
 
           network_zone = lib.mkOption {
             type = lib.types.str;
@@ -52,6 +58,7 @@
       description = ''
         Utils to make the configuration of NixOs Containers more streamlined, in Context of the entire flake.
       '';
+      default = {};
     };
   };
 
@@ -62,7 +69,7 @@
         value.directories =
           lib.attrsets.mapAttrs (_: value: {
             owner = builtins.toString config.containers."${name}".config.users.users.${value.owner}.uid;
-            group = builtins.toString config.containers."${name}".config.users.group.${value.group}.gid;
+            group = builtins.toString config.containers."${name}".config.users.groups.${value.group}.gid;
             mode = value.mode;
           })
           value.volumes;

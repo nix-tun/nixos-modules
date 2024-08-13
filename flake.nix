@@ -24,6 +24,7 @@
       imports = [
         ./yubikey-gpg.nix
         inputs.impermanence.nixosModules.impermanence
+	./utils/container.nix
         ./storage/persist.nix
         ./services/matrix.nix
         ./services/traefik.nix

@@ -22,7 +22,7 @@
       };
 
       nix-tun.utils.containers."matrix-${opts.servername}".volumes = {
-        "postgrs" = {
+        "postgres" = {
           path = "/postgres";
           owner = "postgres";
           mode = "0700";
@@ -31,27 +31,22 @@
 
       nix-tun.services.traefik.services."{opts.servername}" = {
         router.rule = "Host(`matrix.${opts.servername}`) || (Host(`${opts.servername}`) && (Path(`/_matrix/{name:.*}`) || Path(`/_synapse/{name:.*}`) || Path(`/.well-known/matrix/server`) || Path(`/.well-known/matrix/client`)))";
-        servers = ["http://${config.containers.inphimatrix.config.networking.hostName}:8008"];
+        servers = ["http://${config.containers.matrix-localhost.config.networking.hostName}:8008"];
       };
 
       containers."matrix-${opts.servername}" = {
         ephemeral = true;
         autoStart = true;
-        #privateNetwork = true;
-        #hostAddress = "192.168.105.10";
-        #localAddress = "192.168.105.11";
-        extraFlags = [
+        privateNetwork = true;
+        
+	extraFlags = [
           "--network-zone=mx${opts.servername}"
         ];
-        bindMounts = {
+        
+	bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.matrix_pass.path;
             mountPoint = config.sops.secrets.matrix_pass.path;
-          };
-          "db" = {
-            hostPath = "${config.nix-tun.storage.persist.path}/inphimatrix/postgres";
-            mountPoint = "/var/lib/postgres";
-            isReadOnly = false;
           };
         };
 
@@ -60,6 +55,9 @@
           lib,
           ...
         }: {
+	  systemd.network.enable = true;
+	  networking.useHostResolvConf = lib.mkForce false;
+	  services.resolved.enable = true;
           # enable postgres
           services.postgresql = {
             enable = true;
@@ -108,7 +106,7 @@
             };
           };
           # enable coturn
-          services.coturn = rec {
+          services.coturn = {
             enable = true;
             no-cli = true;
             no-tcp-relay = true;

@@ -23,10 +23,10 @@
     nixosModules.nix-tun = {pkgs, ...}: {
       imports = [
         ./yubikey-gpg.nix
-	inputs.impermanence.nixosModules.impermanence
+        inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
-	./services/matrix.nix
-	./services/traefik.nix
+        ./services/matrix.nix
+        ./services/traefik.nix
       ];
     };
   };

@@ -22,6 +22,10 @@
 	"enp2s0f0"
       ];
 
+        # Get bridge-ip with DHCP
+      networking.useDHCP = false;
+      networking.interfaces."br0".useDHCP = true;
+
       sops.secrets.matrix_pass = {
         mode = "444";
       };

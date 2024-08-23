@@ -17,6 +17,11 @@
     opts = config.nix-tun.services.matrix;
   in
     lib.mkIf opts.enable {
+      networking.bridges.br0.interfaces = [
+        "wlp3s0"
+	"enp2s0f0"
+      ];
+
       sops.secrets.matrix_pass = {
         mode = "444";
       };
@@ -38,12 +43,10 @@
         ephemeral = true;
         autoStart = true;
         privateNetwork = true;
-        
-	extraFlags = [
-          "--network-zone=mx${opts.servername}"
-        ];
-        
-	bindMounts = {
+
+	hostBridge = "br0";
+
+        bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.matrix_pass.path;
             mountPoint = config.sops.secrets.matrix_pass.path;
@@ -55,9 +58,9 @@
           lib,
           ...
         }: {
-	  systemd.network.enable = true;
-	  networking.useHostResolvConf = lib.mkForce false;
-	  services.resolved.enable = true;
+          systemd.network.enable = true;
+          networking.useHostResolvConf = lib.mkForce false;
+          services.resolved.enable = true;
           # enable postgres
           services.postgresql = {
             enable = true;

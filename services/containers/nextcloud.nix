@@ -46,7 +46,7 @@
         };
       };
 
-      teenix.services.traefik.services."nextcloud" = {
+      nix-tun.services.traefik.services."nextcloud" = {
         router.rule = "Host(`${opts.hostname}`)";
         servers = ["http://${config.containers.nextcloud.config.networking.hostName}"];
       };

@@ -26,6 +26,7 @@
         inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
 	./services/containers/nextcloud.nix
+	./utils/container.nix
         #./services/matrix.nix
         ./services/traefik.nix
       ];

@@ -12,10 +12,6 @@
     hostname = lib.mkOption {
       type = t.str;
     };
-    package = lib.mkOption {
-      type = t.package;
-      default = pkgs.nextcloud28;
-    };
     secretsFile = lib.mkOption {
       type = t.path;
       description = "path to the sops secret file for the adminPass";
@@ -71,7 +67,7 @@
         config = {...}: {
           services.nextcloud = {
             enable = true;
-            package = opts.package;
+            package = pkgs.nextcloud28;
 
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];

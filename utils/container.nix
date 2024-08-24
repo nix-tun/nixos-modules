@@ -44,6 +44,7 @@
           };
         };
       }));
+      default = {};
       description = ''
         Utils to make the configuration of NixOs Containers more streamlined, in Context of the entire flake.
       '';

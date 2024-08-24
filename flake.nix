@@ -25,6 +25,7 @@
         ./yubikey-gpg.nix
         inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
+	./services/containers/nextcloud.nix
         #./services/matrix.nix
         ./services/traefik.nix
       ];

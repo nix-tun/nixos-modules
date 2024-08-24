@@ -28,7 +28,7 @@
   };
 
   config = let
-    opts = config.nix-tun.services.nextcloud;
+    opts = config.nix-tun.services.containers.nextcloud;
   in
     lib.mkIf opts.enable {
       #sops.secrets.nextcloud_pass = {

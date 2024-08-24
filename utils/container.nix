@@ -27,6 +27,7 @@
               description = ''
                 The name of the group of the Directory. (of a group inside the container)
               '';
+	      default = "root";
             };
             mode = lib.mkOption {
               type = lib.types.str;

@@ -11,7 +11,9 @@
         options = {
           volumes = lib.mkOption {
             description = ''
-              Directories to autmatically create in Persistent Storage, and Bind Mount inside the container
+              Directories to autmatically create in persistent storage, and bind mount inside the container.
+	      Directories will be created in /persist/containers/<container-name>/<directory>.
+	      Where /persist/containers/<container-name> is a btrfs Subvolume that will be snapshoted daily.
             '';
             owner = lib.mkOption {
               type = lib.types.str;
@@ -39,13 +41,6 @@
                 The path inside the container, where the directory should be bind mounted.
               '';
             };
-          };
-
-          network_zone = lib.mkOption {
-            type = lib.types.str;
-            description = ''
-              The systemd-nspawn network zone of the container
-            '';
           };
         };
       }));

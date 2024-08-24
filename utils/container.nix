@@ -35,12 +35,6 @@
               '';
               default = "0700";
             };
-            path = lib.mkOption {
-              type = lib.types.str;
-              description = ''
-                The path inside the container, where the directory should be bind mounted.
-              '';
-            };
           };
         };
       }));
@@ -70,7 +64,7 @@
         bindMounts =
           lib.attrsets.mapAttrs (n: value: {
             hostPath = "${config.nix-tun.storage.persist.path}/containers/${name}/${n}";
-            mountPoint = value.path;
+            mountPoint = n;
             isReadOnly = false;
           })
           value.volumes;

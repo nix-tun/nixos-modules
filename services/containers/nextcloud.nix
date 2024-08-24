@@ -31,9 +31,9 @@
     opts = config.nix-tun.services.containers.nextcloud;
   in
     lib.mkIf opts.enable {
-      #sops.secrets.nextcloud_pass = {
-      #  mode = "444";
-      #};
+      sops.secrets.nextcloud_pass = {
+        mode = "444";
+      };
 
       nix-tun.utils.containers.nextcloud.volumes = {
         "/var/lib/mysql" = {
@@ -76,11 +76,11 @@
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
 
-            database.createLocally = true;
+            #database.createLocally = true;
 
             settings.trusted_domains = ["192.168.100.11" opts.hostname];
             config = {
-              #adminpassFile = config.sops.secrets.nextcloud_pass.path;
+              adminpassFile = config.sops.secrets.nextcloud_pass.path;
               dbtype = "mysql";
             };
 
@@ -105,6 +105,11 @@
               "pm.start_servers" = "50";
             };
           };
+
+	  services.mysql = {
+	    enable = true;
+	    package = pkgs.mariadb;
+	  };
 
           networking = {
             firewall = {

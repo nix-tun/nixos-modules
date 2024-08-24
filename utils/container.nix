@@ -57,7 +57,7 @@
         value.directories =
           lib.attrsets.mapAttrs (_: value: {
             owner = builtins.toString config.containers."${name}".config.users.users.${value.owner}.uid;
-            group = builtins.toString config.containers."${name}".config.users.group.${value.group}.gid;
+            group = builtins.toString config.containers."${name}".config.users.groups.${value.group}.gid;
             mode = value.mode;
           })
           value.volumes;

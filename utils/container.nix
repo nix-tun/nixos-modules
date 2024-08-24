@@ -15,30 +15,33 @@
 	      Directories will be created in /persist/containers/<container-name>/<directory>.
 	      Where /persist/containers/<container-name> is a btrfs Subvolume that will be snapshoted daily.
             '';
-            owner = lib.mkOption {
-              type = lib.types.str;
-              description = ''
-                The username of the owner of the Directory (of an user declared inside the container)
+	    type = lib.types.attrsOf (lib.types.submodule ({...} : {
+              options = {
+		owner = lib.mkOption {
+                  type = lib.types.str;
+	          description = ''
+	            The username of the owner of the Directory (of an user declared inside the container)
               '';
-              default = "root";
-            };
-            group = lib.mkOption {
-              type = lib.types.str;
-              description = ''
-                The name of the group of the Directory. (of a group inside the container)
-              '';
-	      default = "root";
-            };
-            mode = lib.mkOption {
-              type = lib.types.str;
-              description = ''
-                The mode of the directory
-              '';
-              default = "0700";
-            };
-          };
+		default = "root";
+	      };
+	      group = lib.mkOption {
+		type = lib.types.str;
+		description = ''
+		  The name of the group of the Directory. (of a group inside the container)
+		'';
+		default = "root";
+	      };
+	      mode = lib.mkOption {
+		type = lib.types.str;
+		description = ''
+		  The mode of the directory
+		'';
+		default = "0700";
+	      };
+	    };
+	  }));
         };
-      }));
+      };
       default = {};
       description = ''
         Utils to make the configuration of NixOs Containers more streamlined, in Context of the entire flake.

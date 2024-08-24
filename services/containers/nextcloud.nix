@@ -80,7 +80,7 @@
 
             settings.trusted_domains = ["192.168.100.11" opts.hostname];
             config = {
-              adminpassFile = config.sops.secrets.nextcloud_pass.path;
+              adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
             };
 

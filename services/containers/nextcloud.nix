@@ -102,11 +102,6 @@
             };
           };
 
-	  services.mysql = {
-	    enable = true;
-	    package = pkgs.mariadb;
-	  };
-
           networking = {
             firewall = {
               enable = true;

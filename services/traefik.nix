@@ -145,9 +145,6 @@
       };
 
       staticConfigOptions = {
-        metrics.prometheus = {
-          entryPoint = "metrics";
-        };
         certificatesResolvers = {
           letsencrypt = {
             acme = {

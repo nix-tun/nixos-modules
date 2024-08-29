@@ -5,7 +5,6 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     impermanence.url = "github:nix-community/impermanence";
     authentik-nix.url = "github:nix-community/authentik-nix";
-    authentik-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {nixpkgs, ...} @ inputs: let
@@ -22,7 +21,7 @@
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-    nixosModules.nix-tun = {pkgs, ...} @ inputs : {
+    nixosModules.nix-tun = {pkgs, ...} : {
       specialArgs = { inherit inputs; };
       imports = [
         ./yubikey-gpg.nix

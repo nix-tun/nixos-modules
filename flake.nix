@@ -5,6 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     impermanence.url = "github:nix-community/impermanence";
     authentik-nix.url = "github:nix-community/authentik-nix";
+    authentik-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {nixpkgs, ...} @ inputs: let

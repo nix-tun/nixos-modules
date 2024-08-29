@@ -2,10 +2,14 @@
   pkgs,
   config,
   lib,
+  inputs,
   ...
 }: let
   opts = config.nix-tun.storage.persist;
 in {
+  imports = [
+        inputs.impermanence.nixosModules.impermanence
+  ];
   options.nix-tun.storage.persist = {
     enable = lib.mkEnableOption ''
            A wrapper arround impermanence and btrbk. Expects a btrfs filesystem with the following layout:

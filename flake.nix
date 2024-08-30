@@ -22,7 +22,6 @@
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
     nixosModules.nix-tun = {pkgs, ...} : {
-      specialArgs = { inherit inputs; };
       imports = [
         ./yubikey-gpg.nix
         ./storage/persist.nix
@@ -30,6 +29,8 @@
 	./services/containers/authentik.nix
         ./utils/container.nix
         #./services/matrix.nix
+	
+        inputs.impermanence.nixosModules.impermanence
         ./services/traefik.nix
       ];
     };

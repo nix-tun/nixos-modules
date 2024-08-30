@@ -10,9 +10,7 @@
     hostname = lib.mkOption {
       type = lib.types.str;
     };
-    mail = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({...} : {
-      options = {
+    mail = {
         host = lib.mkOption {
 	  type = lib.types.str;
 	};
@@ -25,8 +23,6 @@
 	from = lib.mkOption {
 	  type = lib.types.str;
 	};
-      };
-      }));
     };
     envFile = lib.mkOption {
       type = lib.types.path;

@@ -21,15 +21,16 @@
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-    nixosModules.nix-tun = {pkgs, ...} : {
+    nixosModules.nix-tun = {pkgs, ...}: {
       imports = [
         ./yubikey-gpg.nix
         ./storage/persist.nix
+	./storage/backup-config.nix
         ./services/containers/nextcloud.nix
-	./services/containers/authentik.nix
+        ./services/containers/authentik.nix
         ./utils/container.nix
         #./services/matrix.nix
-	
+
         inputs.impermanence.nixosModules.impermanence
         ./services/traefik.nix
       ];

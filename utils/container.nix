@@ -11,37 +11,37 @@
         options = {
           volumes = lib.mkOption {
             description = ''
-              Directories to autmatically create in persistent storage, and bind mount inside the container.
-	      Directories will be created in /persist/containers/<container-name>/<directory>.
-	      Where /persist/containers/<container-name> is a btrfs Subvolume that will be snapshoted daily.
+                     Directories to autmatically create in persistent storage, and bind mount inside the container.
+              Directories will be created in /persist/containers/<container-name>/<directory>.
+              Where /persist/containers/<container-name> is a btrfs Subvolume that will be snapshoted daily.
             '';
-	    type = lib.types.attrsOf (lib.types.submodule ({...} : {
+            type = lib.types.attrsOf (lib.types.submodule ({...}: {
               options = {
-		owner = lib.mkOption {
+                owner = lib.mkOption {
                   type = lib.types.str;
-	          description = ''
-	            The username of the owner of the Directory (of an user declared inside the container)
-              '';
-		default = "root";
-	      };
-	      group = lib.mkOption {
-		type = lib.types.str;
-		description = ''
-		  The name of the group of the Directory. (of a group inside the container)
-		'';
-		default = "root";
-	      };
-	      mode = lib.mkOption {
-		type = lib.types.str;
-		description = ''
-		  The mode of the directory
-		'';
-		default = "0700";
-	      };
-	    };
-	  }));
+                  description = ''
+                    The username of the owner of the Directory (of an user declared inside the container)
+                  '';
+                  default = "root";
+                };
+                group = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    The name of the group of the Directory. (of a group inside the container)
+                  '';
+                  default = "root";
+                };
+                mode = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    The mode of the directory
+                  '';
+                  default = "0700";
+                };
+              };
+            }));
+          };
         };
-      };
       }));
       default = {};
       description = ''

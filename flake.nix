@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     impermanence.url = "github:nix-community/impermanence";
+    authentik-nix.url = "github:nix-community/authentik-nix";
   };
 
   outputs = {nixpkgs, ...} @ inputs: let
@@ -20,14 +21,16 @@
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-    nixosModules.nix-tun = {pkgs, ...}: {
+    nixosModules.nix-tun = {pkgs, ...} : {
       imports = [
         ./yubikey-gpg.nix
-        inputs.impermanence.nixosModules.impermanence
         ./storage/persist.nix
         ./services/containers/nextcloud.nix
+	./services/containers/authentik.nix
         ./utils/container.nix
         #./services/matrix.nix
+	
+        inputs.impermanence.nixosModules.impermanence
         ./services/traefik.nix
       ];
     };

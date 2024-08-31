@@ -41,7 +41,7 @@
       };
 
       nix-tun.utils.containers."authentik".volumes = {
-        "/var/lib/postgres" = {
+        "/var/lib/postgresql" = {
           owner = "postgres";
         };
       };

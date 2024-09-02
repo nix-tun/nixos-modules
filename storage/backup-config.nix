@@ -74,7 +74,7 @@ in {
   config = lib.mkIf config.nix-tun.storage.backup.enable {
     nix-tun.storage.backup.server =
       lib.attrsets.mapAttrs (name: value: {
-        host = value.options.networking.host.value;
+        host = value.options.networking.hostName.value;
         btrfs_base = value.options.nix-tun.storage.persist.path.value;
         subvolumes = lib.attrs.mapAttrsToList (
           name: value:

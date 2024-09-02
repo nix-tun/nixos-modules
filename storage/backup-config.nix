@@ -109,7 +109,7 @@ in {
                   value = {
                     snapshot_create = "always";
                     snapshot_dir = "${n}/.snapshots";
-                    target = "/backup/${name}${value}/${n}";
+                    target = "/backup/${name}${value.btrfs_base}/${n}";
                   };
                 })
                 value.subvolumes);

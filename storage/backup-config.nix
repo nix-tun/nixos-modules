@@ -47,7 +47,7 @@ in {
         options = {
           host = {
             type = lib.types.str;
-            default = null;
+            default = "";
             description = ''
               The hostName or ip address of the server, if null uses the name
             '';

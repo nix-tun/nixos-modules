@@ -46,7 +46,7 @@ in {
       type = lib.types.attrsOf (lib.types.submodule ({...}: {
         options = {
           host = {
-            type = lib.types.str;
+            type = lib.types.unspecified;
             default = "";
             description = ''
               The hostName or ip address of the server, if null uses the name

@@ -76,7 +76,7 @@ in {
       lib.attrsets.mapAttrs (name: value: {
         host = "";
         btrfs_base = value.options.nix-tun.storage.persist.path.value;
-        subvolumes = lib.attrs.mapAttrsToList (
+        subvolumes = lib.attrsets.mapAttrsToList (
           name: value:
             value
         ) (lib.attrsets.filterAttrs (n: v: v.backup) value.options.nix-tun.storage.persist.subvolumes.value);

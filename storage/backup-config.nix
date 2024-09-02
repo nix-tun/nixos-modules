@@ -39,54 +39,62 @@ in {
       type = lib.types.unspecified;
       default = {};
       description = ''
-	The list of nixos configurations from the systems to bakups. Evaluates the nix-tun.storage.persist.profile for backups
+        The list of nixos configurations from the systems to bakups. Evaluates the nix-tun.storage.persist.profile for backups
       '';
-      server = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.submodule ({ ... } : {
-	  options = {
-	    host = {
-	      type = lib.types.str;
-	      default = null;
-	      description = ''
-	        The hostName or ip address of the server, if null uses the name
-	      '';
-	    };
-	    btrfs_base = lib.mkOption {
-	      type = lib.types.str;
-	      default = "/";
-	      description = ''
-	        The base btrfs mount point on the server.
-	      '';
-	    };
-	    subvolumes = lib.mkOption {
-	      type = lib.types.listOf lib.types.str;
-	      default = [];
-	      description = ''
-	        The subvolumes on server to backup
-	      '';
-	    };
-	  };
-	}));
-      };
+    };
+    server = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule ({...}: {
+        options = {
+          host = {
+            type = lib.types.str;
+            default = null;
+            description = ''
+              The hostName or ip address of the server, if null uses the name
+            '';
+          };
+          btrfs_base = lib.mkOption {
+            type = lib.types.str;
+            default = "/";
+            description = ''
+              The base btrfs mount point on the server.
+            '';
+          };
+          subvolumes = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = ''
+              The subvolumes on server to backup
+            '';
+          };
+        };
+      }));
     };
   };
 
   config = lib.mkIf config.nix-tun.storage.backup.enable {
-    nix-tun.storage.backup.server = lib.attrsets.mapAttrs (name: value: {
-      host = value.options.networking.host.value;
-      btrfs_base = value.options.nix-tun.storage.persist.path.value;
-      subvolumes = lib.attrs.mapAttrsToList (name: value: 
-        value
-      ) (lib.attrsets.filterAttrs (n: v: v.backup) value.options.nix-tun.storage.persist.subvolumes.value);
-    }) config.nix-tun.storage.backup.nixosConfigs;
+    nix-tun.storage.backup.server =
+      lib.attrsets.mapAttrs (name: value: {
+        host = value.options.networking.host.value;
+        btrfs_base = value.options.nix-tun.storage.persist.path.value;
+        subvolumes = lib.attrs.mapAttrsToList (
+          name: value:
+            value
+        ) (lib.attrsets.filterAttrs (n: v: v.backup) value.options.nix-tun.storage.persist.subvolumes.value);
+      })
+      config.nix-tun.storage.backup.nixosConfigs;
 
-    systemd.tmpfiles.rules = builtins.concatList (lib.attrsets.mapAttrsToList (name: value: [
-      "v /backup/${name}${value.btrfs_base} 0700 btrbk btrbk"
-    ] ++ (lib.lists.map (v: 
-      "d /backup/${name}${value.btrfs_base}/${v} 0700 btrbk btrbk"
-    ) value.subvolumes)) config.nix-tun.storage.server);
+    systemd.tmpfiles.rules = builtins.concatList (lib.attrsets.mapAttrsToList (name: value:
+      [
+        "v /backup/${name}${value.btrfs_base} 0700 btrbk btrbk"
+      ]
+      ++ (lib.lists.map (
+          v: "d /backup/${name}${value.btrfs_base}/${v} 0700 btrbk btrbk"
+        )
+        value.subvolumes))
+    config.nix-tun.storage.server);
 
-    services.btrbk.instances = lib.attrsets.mapAttrs (name: value: {
+    services.btrbk.instances =
+      lib.attrsets.mapAttrs (name: value: {
         settings = {
           backend_remote = "btrfs-progs";
           snapshot_preserve = "7d";
@@ -96,15 +104,17 @@ in {
           ssh_identity = "/etc/btrbk/id_ed25519";
           volume = {
             "ssh://${value.host}${value.btrfs_base}" = {
-              subvolume = lib.mapAttrs (n: v: {
-                snapshot_create = "always";
-                snapshot_dir = "${n}/.snapshots";
-                target = "/backup/${name}${value}/${n}";
-              })
-              value.options.nix-tun.storage.persist.subvolumes.value;
+              subvolume =
+                lib.mapAttrs (n: v: {
+                  snapshot_create = "always";
+                  snapshot_dir = "${n}/.snapshots";
+                  target = "/backup/${name}${value}/${n}";
+                })
+                value.options.nix-tun.storage.persist.subvolumes.value;
             };
           };
         };
-      }) config.nix-tun.storage.backup.server;
+      })
+      config.nix-tun.storage.backup.server;
   };
 }

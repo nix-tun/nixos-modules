@@ -104,13 +104,15 @@ in {
           ssh_identity = "/etc/btrbk/id_ed25519";
           volume = {
             "ssh://${value.host}${value.btrfs_base}" = {
-              subvolume =
-                lib.mapAttrs (n: v: {
-                  snapshot_create = "always";
-                  snapshot_dir = "${n}/.snapshots";
-                  target = "/backup/${name}${value}/${n}";
+              subvolume = builtins.listToAttrs (builtins.map (n: {
+                  name = n;
+                  value = {
+                    snapshot_create = "always";
+                    snapshot_dir = "${n}/.snapshots";
+                    target = "/backup/${name}${value}/${n}";
+                  };
                 })
-                value.options.nix-tun.storage.persist.subvolumes.value;
+                value.subvolumes);
             };
           };
         };

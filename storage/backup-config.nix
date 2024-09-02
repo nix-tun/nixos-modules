@@ -45,8 +45,8 @@ in {
     server = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule ({...}: {
         options = {
-          host = {
-            type = lib.types.unspecified;
+          host = lib.mkOption {
+            type = lib.types.str;
             default = "";
             description = ''
               The hostName or ip address of the server, if null uses the name

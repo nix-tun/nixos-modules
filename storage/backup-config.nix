@@ -78,7 +78,7 @@ in {
         btrfs_base = value.options.nix-tun.storage.persist.path.value;
         subvolumes = lib.attrsets.mapAttrsToList (
           name: value:
-            value
+            name
         ) (lib.attrsets.filterAttrs (n: v: v.backup) value.options.nix-tun.storage.persist.subvolumes.value);
       })
       config.nix-tun.storage.backup.nixosConfigs;

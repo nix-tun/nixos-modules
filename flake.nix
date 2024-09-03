@@ -25,7 +25,7 @@
       imports = [
         ./yubikey-gpg.nix
         ./storage/persist.nix
-	./storage/backup-config.nix
+        ./storage/backup-server.nix
         ./services/containers/nextcloud.nix
         ./services/containers/authentik.nix
         ./utils/container.nix

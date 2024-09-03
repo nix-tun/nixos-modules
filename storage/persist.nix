@@ -22,6 +22,12 @@ in {
         The root directory for all of non generated persistent storage, except /nix and /boot.
       '';
     };
+    is_server = lib.mkEnableOption ''
+      Enable if this System is a Server, only Servers are backedup automatically,
+      when given to the backup-server.nix module.
+      
+      This is because the backup-server module expects that, servers are reachable even if not actively used.
+      '';
     subvolumes = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule ({...}: {
         options = {
@@ -133,8 +139,6 @@ in {
               group = value.group;
               mode = value.mode;
             }
-            #(lib.mkIf config.networking.networkmanager.enable "/etc/NetworkManager/system-connections")
-            #(lib.mkIf config.services.printing.enable "/var/lib/cups")
           )
           value.directories;
         files = [

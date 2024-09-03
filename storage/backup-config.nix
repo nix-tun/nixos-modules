@@ -3,36 +3,7 @@
   pkgs,
   lib,
   ...
-}: let
-  server = [
-    {
-      server = "samba-fs.ad.astahhu.de";
-      btrfs_base = "/share";
-      subvolumes = [
-        "."
-        "home"
-        "intern/IT-Referat"
-        "intern/Vorstand"
-        "intern/Kulturreferat"
-        "intern/NaMo"
-        "intern/Politische Bildung"
-        "intern/AntiFaRaDis"
-        "intern/Finanzreferat"
-        "intern/Sozialreferat"
-        "intern/Presse Oeffentlichkeitsarbeit"
-        "intern/autonom/Fachschaftenreferat"
-        "intern/autonom/LesBi"
-        "intern/autonom/BiSchwu"
-        "intern/autonom/Internationales"
-        "intern/autonom/Barrierefreiheit"
-        "intern/autonom/Tinby"
-        "public"
-        "profile"
-        "software"
-      ];
-    }
-  ];
-in {
+} : {
   options.nix-tun.storage.backup = {
     enable = lib.mkEnableOption "Enable Backup System";
     nixosConfigs = lib.mkOption {
@@ -91,7 +62,7 @@ in {
           v: "d /backup/${name}${value.btrfs_base}/${v} 0700 btrbk btrbk"
         )
         value.subvolumes))
-    config.nix-tun.storage.server);
+    config.nix-tun.storage.backup.server);
 
     services.btrbk.instances =
       lib.attrsets.mapAttrs (name: value: {

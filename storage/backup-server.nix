@@ -52,7 +52,7 @@
             name
         ) (lib.attrsets.filterAttrs (n: v: v.backup) value.options.nix-tun.storage.persist.subvolumes.value);
       })
-      (lib.attrsets.filterAttrs (n: v: v.is_server) config.nix-tun.storage.backup.nixosConfigs);
+      (lib.attrsets.filterAttrs (n: v: v.options.nix-tun.storage.persist.is_server.value) config.nix-tun.storage.backup.nixosConfigs);
 
     systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (name: value:
       [

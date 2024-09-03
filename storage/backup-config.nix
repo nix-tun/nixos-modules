@@ -83,7 +83,7 @@ in {
       })
       config.nix-tun.storage.backup.nixosConfigs;
 
-    systemd.tmpfiles.rules = builtins.concatList (lib.attrsets.mapAttrsToList (name: value:
+    systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (name: value:
       [
         "v /backup/${name}${value.btrfs_base} 0700 btrbk btrbk"
       ]

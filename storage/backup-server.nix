@@ -69,8 +69,6 @@
         settings = {
           backend_remote = "btrfs-progs";
           snapshot_preserve = "7d";
-          snapshot_preserve_min = "7d";
-          target_preserve_min = "14d 4w 2m";
           target_preserve = "14d 4w 6m";
           ssh_identity = "/etc/btrbk/id_ed25519";
           volume = {

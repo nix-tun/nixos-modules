@@ -71,6 +71,7 @@
           snapshot_preserve = "7d";
           target_preserve = "14d 4w 6m";
           ssh_identity = "/etc/btrbk/id_ed25519";
+          ssh_user = "btrbk";
           volume = {
             "ssh://${value.host}${value.btrfs_base}" = {
               subvolume = builtins.listToAttrs (builtins.map (n: {

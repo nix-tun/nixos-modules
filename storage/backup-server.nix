@@ -67,7 +67,7 @@
     services.btrbk.instances =
       lib.attrsets.mapAttrs (name: value: {
         settings = {
-          backend_remote = "btrfs-progs";
+          backend_remote = "btrfs-progs-sudo";
           snapshot_preserve = "7d";
           target_preserve = "14d 4w 6m";
           ssh_identity = "/etc/btrbk/id_ed25519";

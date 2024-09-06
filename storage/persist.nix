@@ -117,11 +117,11 @@ in {
     systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (
         name: value:
           [
-            "v ${opts.path}/${name} ${value.mode} ${value.owner} ${value.group} -"
-            (lib.mkIf value.backup "d ${opts.path}/${name}/.snapshots ${value.mode} ${value.owner} ${value.group} -")
+            "v '${opts.path}/${name}' ${value.mode} ${value.owner} ${value.group} -"
+            (lib.mkIf value.backup "d '${opts.path}/${name}/.snapshots' ${value.mode} ${value.owner} ${value.group} -")
           ]
           ++ lib.attrsets.mapAttrsToList (
-            n: v: "d ${opts.path}/${name}/${n} ${v.mode} ${v.owner} ${v.group} -"
+            n: v: "d '${opts.path}/${name}/${n}' ${v.mode} ${v.owner} ${v.group} -"
           )
           value.directories
       )

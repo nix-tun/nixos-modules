@@ -17,7 +17,7 @@
 
   config =
     let
-      opts = config.nix-tun.services.containers.authentik;
+      opts = config.nix-tun.services.containers.onlyoffice;
     in
     lib.mkIf opts.enable {
       sops.secrets.onlyoffice_jwt = {

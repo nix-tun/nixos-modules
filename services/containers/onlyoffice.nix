@@ -26,7 +26,7 @@
         mode = "444";
       };
 
-      nix-tun.services.traefik.services."authentik" = {
+      nix-tun.services.traefik.services."onlyoffice" = {
         router.rule = "Host(`${opts.hostname}`)";
         servers = [ "http://${config.containers.onlyoffice.config.networking.hostName}:8000" ];
       };

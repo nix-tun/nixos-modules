@@ -50,6 +50,8 @@
             inputs.authentik-nix.nixosModules.default
           ];
 
+          nixpkgs.config.allowUnfree = true;
+
           networking.hostName = "onlyoffice";
 
           services.onlyoffice = {

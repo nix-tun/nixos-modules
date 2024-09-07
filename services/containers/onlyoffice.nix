@@ -43,6 +43,10 @@
             hostPath = config.sops.secrets.onlyoffice_jwt.path;
             mountPoint = config.sops.secrets.onlyoffice_jwt.path;
           };
+          "resolv" = {
+            hostPath = "/etc/resolv.conf";
+            mountPoint = "/etc/resolv.conf";
+          };
         };
 
         config = { ... }: {

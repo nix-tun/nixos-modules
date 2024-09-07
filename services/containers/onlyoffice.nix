@@ -21,7 +21,7 @@
     in
     lib.mkIf opts.enable {
       sops.secrets.onlyoffice_jwt = {
-        sopsFile = opts.envFile;
+        sopsFile = opts.jwtSecretFile;
         format = "binary";
         mode = "444";
       };

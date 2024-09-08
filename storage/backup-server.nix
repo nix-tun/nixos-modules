@@ -56,10 +56,10 @@
 
     systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (name: value:
       [
-        "v /backup/${name}${value.btrfs_base} 0700 btrbk btrbk"
+        "v '/backup/${name}${value.btrfs_base}' 0700 btrbk btrbk"
       ]
       ++ (lib.lists.map (
-          v: "d /backup/${name}${value.btrfs_base}/${v} 0700 btrbk btrbk"
+          v: "d '/backup/${name}${value.btrfs_base}/${v}' 0700 btrbk btrbk"
         )
         value.subvolumes))
     config.nix-tun.storage.backup.server);

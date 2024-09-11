@@ -50,6 +50,7 @@
       containers.nextcloud = {
         autoStart = true;
         privateNetwork = true;
+	timeoutStartSec = "5min";
         hostAddress = "192.168.100.10";
         localAddress = "192.168.100.11";
         bindMounts = {

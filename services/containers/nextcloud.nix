@@ -77,13 +77,13 @@
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
 	    notify_push.enable = true;
 
-            #database.createLocally = true;
+            database.createLocally = true;
 
             settings.trusted_domains = ["192.168.100.11" opts.hostname];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
-	      dbpassFile = config.sops.secrets.nextcloud_dbpass.path;
+	      #dbpassFile = config.sops.secrets.nextcloud_dbpass.path;
             };
 
             phpOptions = {

@@ -76,6 +76,7 @@
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
 	    notify_push.enable = true;
+	    notify_push.dbhost = "/run/mysqld/mysqld.sock";
 
             database.createLocally = true;
 
@@ -83,7 +84,6 @@
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
-	      #dbpassFile = config.sops.secrets.nextcloud_dbpass.path;
             };
 
             phpOptions = {

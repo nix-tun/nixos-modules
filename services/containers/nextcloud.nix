@@ -82,8 +82,8 @@
 	    };
 
             database.createLocally = true;
-
-            settings.trusted_domains = ["192.168.100.11" opts.hostname];
+	    settings.trusted_proxies = [ "192.168.100.10" ];
+            settings.trusted_domains = ["192.168.100.11" "192.168.100.10" opts.hostname];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";

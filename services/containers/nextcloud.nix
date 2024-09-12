@@ -72,6 +72,7 @@
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
+	    notify_push .enable = true;
 
             #database.createLocally = true;
 

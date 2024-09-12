@@ -30,6 +30,9 @@
       sops.secrets.nextcloud_pass = {
         mode = "444";
       };
+      sops.secrets.nextcloud_dbpass = {
+        mode = "444";
+      };
 
       nix-tun.utils.containers.nextcloud.volumes = {
         "/var/lib/mysql" = {
@@ -80,6 +83,7 @@
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
+	      dbpassFile = config.sops.secrets.nextcloud_dbpass.path;
             };
 
             phpOptions = {

@@ -75,8 +75,11 @@
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
-	    notify_push.enable = true;
-	    notify_push.dbhost = "/run/mysqld/mysqld.sock";
+	    notify_push = {
+	      enable = true;
+	      dbhost = "/run/mysqld/mysqld.sock";
+	      dbuser = "nextcloud@localhost:";
+	    };
 
             database.createLocally = true;
 

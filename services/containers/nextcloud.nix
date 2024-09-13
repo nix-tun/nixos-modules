@@ -21,6 +21,10 @@
       type = t.listOf t.str;
       default = [];
     };
+    extraTrustedProxies = lib.mkOption {
+      type = t.listOf t.str;
+      default = [];
+    };
   };
 
   config = let
@@ -82,7 +86,7 @@
 	    };
 
             database.createLocally = true;
-	    settings.trusted_proxies = [ "192.168.100.10" ];
+	    settings.trusted_proxies = [ "192.168.100.10"] ++ opts.extraTrustedProxies;
             settings.trusted_domains = ["192.168.100.11" "192.168.100.10" opts.hostname];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";

@@ -60,7 +60,7 @@
 
           services.onlyoffice = {
             enable = true;
-            hostname = opts.hostname;
+            hostname = "https://${opts.hostname}";
             jwtSecretFile = config.sops.secrets.onlyoffice_jwt.path;
           };
           networking = {

@@ -3,7 +3,7 @@
   pkgs,
   lib,
   ...
-} : {
+}: {
   options.nix-tun.storage.backup = {
     enable = lib.mkEnableOption "Enable Backup System";
     nixosConfigs = lib.mkOption {

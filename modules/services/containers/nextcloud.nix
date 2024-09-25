@@ -54,10 +54,15 @@
         servers = ["http://${config.containers.nextcloud.config.networking.hostName}:80"];
       };
 
+      services.traefik.dynamicConfigOptions = {
+        #http.services."nextcloud".loadBalancer.serversTransport = "insecure";
+        #http.serversTransports."insecure".insecureSkipVerify = true;
+      };
+
       containers.nextcloud = {
         autoStart = true;
         privateNetwork = true;
-	timeoutStartSec = "5min";
+        timeoutStartSec = "5min";
         hostAddress = "192.168.100.10";
         localAddress = "192.168.100.11";
         bindMounts = {
@@ -79,14 +84,14 @@
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
-	    notify_push = {
-	      enable = true;
-	      dbhost = "/run/mysqld/mysqld.sock";
-	      dbuser = "nextcloud@localhost:";
-	    };
+            notify_push = {
+              enable = true;
+              dbhost = "/run/mysqld/mysqld.sock";
+              dbuser = "nextcloud@localhost:";
+            };
 
             database.createLocally = true;
-	    settings.trusted_proxies = [ "192.168.100.10"] ++ opts.extraTrustedProxies;
+            settings.trusted_proxies = ["192.168.100.10"] ++ opts.extraTrustedProxies;
             settings.trusted_domains = ["192.168.100.11" "192.168.100.10" opts.hostname];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
@@ -118,12 +123,14 @@
           networking = {
             firewall = {
               enable = true;
-              allowedTCPPorts = [80];
+              allowedTCPPorts = [80 443];
             };
             # Use systemd-resolved inside the container
             # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
             useHostResolvConf = lib.mkForce false;
           };
+
+          services.nginx.virtualHosts.${opts.hostname}.addSSL = true;
 
           services.resolved.enable = true;
           system.stateVersion = "23.11";

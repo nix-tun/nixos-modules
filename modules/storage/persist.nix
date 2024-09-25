@@ -25,9 +25,9 @@ in {
     is_server = lib.mkEnableOption ''
       Enable if this System is a Server, only Servers are backedup automatically,
       when given to the backup-server.nix module.
-      
+
       This is because the backup-server module expects that, servers are reachable even if not actively used.
-      '';
+    '';
     subvolumes = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule ({...}: {
         options = {

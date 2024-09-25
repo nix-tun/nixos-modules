@@ -1,8 +1,9 @@
-{ lib
-, config
-, inputs
-, pkgs
-, ...
+{
+  lib,
+  config,
+  inputs,
+  pkgs,
+  ...
 }: {
   options.nix-tun.services.containers.onlyoffice = {
     enable = lib.mkEnableOption "setup authentik";
@@ -15,10 +16,9 @@
     };
   };
 
-  config =
-    let
-      opts = config.nix-tun.services.containers.onlyoffice;
-    in
+  config = let
+    opts = config.nix-tun.services.containers.onlyoffice;
+  in
     lib.mkIf opts.enable {
       sops.secrets.onlyoffice_jwt = {
         sopsFile = opts.jwtSecretFile;
@@ -28,7 +28,7 @@
 
       nix-tun.services.traefik.services."onlyoffice" = {
         router.rule = "Host(`${opts.hostname}`)";
-        servers = [ "http://${config.containers.onlyoffice.config.networking.hostName}:8000" ];
+        servers = ["http://${config.containers.onlyoffice.config.networking.hostName}:8000"];
       };
 
       containers.onlyoffice = {
@@ -49,7 +49,7 @@
           };
         };
 
-        config = { ... }: {
+        config = {...}: {
           imports = [
             inputs.authentik-nix.nixosModules.default
           ];
@@ -66,7 +66,7 @@
           networking = {
             firewall = {
               enable = true;
-              allowedTCPPorts = [ 8000 ];
+              allowedTCPPorts = [8000];
             };
             # Use systemd-resolved inside the container
             # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
@@ -77,7 +77,6 @@
 
           system.stateVersion = "23.11";
         };
-
       };
     };
 }

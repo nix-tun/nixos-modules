@@ -26,7 +26,7 @@
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-    documentation = import ./documentation {inherit self forAllSystems lib inputs;};
+    documentation = import ./documentation {inherit forAllSystems lib inputs;};
 
     nixosModules.nix-tun = {...}: {
       imports = [

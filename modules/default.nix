@@ -1,5 +1,5 @@
 { ... } : {
-  import = [
+  imports = [
     ./yubikey-gpg.nix
     ./storage/persist.nix
     ./storage/backup-server.nix

@@ -11,18 +11,18 @@
       type = lib.types.str;
     };
     mail = {
-      host = lib.mkOption {
-        type = lib.types.str;
-      };
-      port = lib.mkOption {
-        type = lib.types.int;
-      };
-      username = lib.mkOption {
-        type = lib.types.str;
-      };
-      from = lib.mkOption {
-        type = lib.types.str;
-      };
+        host = lib.mkOption {
+	  type = lib.types.str;
+	};
+	port = lib.mkOption {
+	  type = lib.types.int;
+	};
+	username = lib.mkOption {
+	  type = lib.types.str;
+	};
+	from = lib.mkOption {
+	  type = lib.types.str;
+	};
     };
     envFile = lib.mkOption {
       type = lib.types.path;

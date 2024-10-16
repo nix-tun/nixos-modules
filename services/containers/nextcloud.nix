@@ -78,7 +78,7 @@
             package = pkgs.nextcloud30;
             https = true;
             hostName = opts.hostname;
-            phpExtraExtensions = all: [all.pdlib all.bz2 all.smbclient];
+            phpExtraExtensions = all: [all.pdlib all.smbclient];
 	    notify_push = {
 	      enable = true;
 	      dbhost = "/run/mysqld/mysqld.sock";

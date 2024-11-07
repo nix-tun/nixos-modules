@@ -1,11 +1,11 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
+{ config
+, pkgs
+, lib
+, ...
 }: {
   options.nix-tun.services.traefik = {
     enable = lib.mkEnableOption "Enable the Traefik Reverse Proxy";
+    enable_docker = lib.mkEnableOption "Enable Docker Discovery";
     letsencryptMail = lib.mkOption {
       type = lib.types.str;
       default = null;
@@ -43,9 +43,9 @@
       '';
     };
     redirects =
-      lib.mkOption {};
+      lib.mkOption { };
     services = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({...}: {
+      type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
         options = {
           router = {
             rule = lib.mkOption {
@@ -79,14 +79,14 @@
             };
             middlewares = lib.mkOption {
               type = lib.types.listOf (lib.types.str);
-              default = [];
+              default = [ ];
               description = ''
                 The middlewares applied to the router, the middlewares are applied in order.
               '';
             };
             entryPoints = lib.mkOption {
               type = lib.types.listOf (lib.types.str);
-              default = ["websecure"];
+              default = [ "websecure" ];
               description = ''
                 The Entrypoint of the service, default is 443 (websecure)
               '';
@@ -94,14 +94,14 @@
           };
           servers = lib.mkOption {
             type = lib.types.listOf (lib.types.str);
-            default = [];
+            default = [ ];
             description = ''
               The hosts of the service
             '';
           };
         };
       }));
-      default = {};
+      default = { };
       description = ''
         A simple setup to configure http loadBalancer services and routers.
       '';
@@ -117,58 +117,64 @@
         http = {
           routers =
             lib.attrsets.mapAttrs
-            (
-              name: value:
-                lib.mkMerge [
-                  {
-                    rule = value.router.rule;
-                    priority = value.router.priority;
-                    middlewares = value.router.middlewares;
-                    service = name;
-                    entryPoints = value.router.entryPoints;
-                  }
-                  (lib.mkIf value.router.tls.enable {
-                    tls = value.router.tls.options;
-                  })
-                ]
-            )
-            config.nix-tun.services.traefik.services;
+              (
+                name: value:
+                  lib.mkMerge [
+                    {
+                      rule = value.router.rule;
+                      priority = value.router.priority;
+                      middlewares = value.router.middlewares;
+                      service = name;
+                      entryPoints = value.router.entryPoints;
+                    }
+                    (lib.mkIf value.router.tls.enable {
+                      tls = value.router.tls.options;
+                    })
+                  ]
+              )
+              config.nix-tun.services.traefik.services;
           services =
             lib.attrsets.mapAttrs
-            (name: value: {
-              loadBalancer = {
-                servers = builtins.map (value: {url = value;}) value.servers;
-              };
-            })
-            config.nix-tun.services.traefik.services;
+              (name: value: {
+                loadBalancer = {
+                  servers = builtins.map (value: { url = value; }) value.servers;
+                };
+              })
+              config.nix-tun.services.traefik.services;
         };
       };
 
       staticConfigOptions = {
+
+        providers.docker = lib.mkIf config.nix-tun.services.traefik.enable_docker {
+          exposedByDefault = false;
+          watch = true;
+        };
+
         certificatesResolvers = {
           letsencrypt = {
             acme = {
               email = config.nix-tun.services.traefik.letsencryptMail;
               storage = "/var/lib/traefik/acme.json";
-              tlsChallenge = {};
+              tlsChallenge = { };
             };
           };
         };
 
         entryPoints =
           lib.attrsets.filterAttrs (n: v: n != "port")
-          (lib.attrsets.mapAttrs
-            (name: value:
-              lib.attrsets.mergeAttrsList [
-                {
-                  address = ":${toString value.port}";
-                }
-                value
-                {
-                  port = null;
-                }
-              ])
-            config.nix-tun.services.traefik.entrypoints);
+            (lib.attrsets.mapAttrs
+              (name: value:
+                lib.attrsets.mergeAttrsList [
+                  {
+                    address = ":${toString value.port}";
+                  }
+                  value
+                  {
+                    port = null;
+                  }
+                ])
+              config.nix-tun.services.traefik.entrypoints);
 
         api = {
           dashboard = true;

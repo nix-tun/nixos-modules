@@ -111,6 +111,8 @@
   config = lib.mkIf config.nix-tun.services.traefik.enable {
     networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port) config.nix-tun.services.traefik.entrypoints;
 
+    users.users.traefik.extraGroups = lib.mkIf config.nix-tun.services.traefik.enable_docker [ "docker" ];
+
     services.traefik = {
       enable = true;
       dynamicConfigOptions = {

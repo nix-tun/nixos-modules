@@ -1,11 +1,12 @@
-{
-  pkgs,
-  config,
-  lib,
-  ...
-}: let
+{ pkgs
+, config
+, lib
+, ...
+}:
+let
   opts = config.nix-tun.storage.persist;
-in {
+in
+{
   options.nix-tun.storage.persist = {
     enable = lib.mkEnableOption ''
            A wrapper arround impermanence and btrbk. Expects a btrfs filesystem with the following layout:
@@ -27,9 +28,9 @@ in {
       when given to the backup-server.nix module.
       
       This is because the backup-server module expects that, servers are reachable even if not actively used.
-      '';
+    '';
     subvolumes = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({...}: {
+      type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
         options = {
           owner = lib.mkOption {
             type = lib.types.str;
@@ -63,7 +64,7 @@ in {
             '';
           };
           directories = lib.mkOption {
-            type = lib.types.attrsOf (lib.types.submodule ({...}: {
+            type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
               options = {
                 owner = lib.mkOption {
                   type = lib.types.str;
@@ -79,15 +80,14 @@ in {
                 };
               };
             }));
-            default = {};
+            default = { };
             description = ''
               Directories that should be created per default inside the subvolume
             '';
           };
         };
       }));
-      default = {
-      };
+      default = { };
       description = ''
         Subvolumes that should be persistent.
       '';
@@ -100,10 +100,10 @@ in {
       system = {
         directories = {
           # The System Log should be persistent accross Reboots
-          "/var/log" = {};
-          "/var/lib/nixos" = {}; # For Correct User Mapping
-          "/var/lib/systemd/coredump" = {};
-          "/etc/NetworkManager/system-connections/" = lib.mkIf config.networking.networkmanager.enable {mode = "0700";};
+          "/var/log" = { };
+          "/var/lib/nixos" = { }; # For Correct User Mapping
+          "/var/lib/systemd/coredump" = { };
+          "/etc/NetworkManager/system-connections/" = lib.mkIf config.networking.networkmanager.enable { mode = "0700"; };
         };
         bindMountDirectories = true;
       };
@@ -114,51 +114,59 @@ in {
     };
 
     # Generates the Directories inside the impermanence module
-    systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList (
+    systemd.tmpfiles.rules = builtins.concatLists (lib.attrsets.mapAttrsToList
+      (
         name: value:
           [
             "v '${opts.path}/${name}' ${value.mode} ${value.owner} ${value.group} -"
             (lib.mkIf value.backup "d '${opts.path}/${name}/.snapshots' ${value.mode} ${value.owner} ${value.group} -")
           ]
-          ++ lib.attrsets.mapAttrsToList (
-            n: v: "d '${opts.path}/${name}/${n}' ${v.mode} ${v.owner} ${v.group} -"
-          )
-          value.directories
+          ++ lib.attrsets.mapAttrsToList
+            (
+              n: v: "d '${opts.path}/${name}/${n}' ${v.mode} ${v.owner} ${v.group} -"
+            )
+            value.directories
       )
       opts.subvolumes);
 
-    environment.persistence = lib.mapAttrs' (name: value: {
-      name = "${opts.path}/${name}";
-      value = {
-        hideMounts = true;
-        directories =
-          lib.mapAttrsToList (
-            name: value: {
-              directory = name;
-              user = value.owner;
-              group = value.group;
-              mode = value.mode;
-            }
-          )
-          value.directories;
-        files = [
-        ];
-      };
-    }) (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
+    environment.persistence = lib.mapAttrs'
+      (name: value: {
+        name = "${opts.path}/${name}";
+        value = {
+          hideMounts = true;
+          directories =
+            lib.mapAttrsToList
+              (
+                name: value: {
+                  directory = name;
+                  user = value.owner;
+                  group = value.group;
+                  mode = value.mode;
+                }
+              )
+              value.directories;
+          files = [
+          ];
+        };
+      })
+      (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
     # Automatically snapshots the Persistent Subvolumes
     services.btrbk.instances.btrbk.settings = {
-      snapshot_preserve = "7d";
-      snapshot_preserve_min = "7d";
+      snapshot_preserve = "6h 7d";
+      snapshot_preserve_min = "6h 7d";
+      onCalendar = "hourly";
       timestamp_format = "long-iso";
 
-      volume = lib.attrsets.mapAttrs' (name: value: {
-        name = "${opts.path}/${name}";
-        value = {
-          subvolume = "${opts.path}/${name}";
-          snapshot_dir = ".snapshots";
-        };
-      }) (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
+      volume = lib.attrsets.mapAttrs'
+        (name: value: {
+          name = "${opts.path}/${name}";
+          value = {
+            subvolume = "${opts.path}/${name}";
+            snapshot_dir = ".snapshots";
+          };
+        })
+        (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
     };
 
     # Exists always because it is needed for SOPS and openssh

@@ -170,22 +170,23 @@ in
           })
           (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
       };
-
-      # Exists always because it is needed for SOPS and openssh
-      services.openssh.hostKeys = [
-        {
-          bits = 4096;
-          openSSHFormat = true;
-          path = "${opts.path}/ssh-keys/ssh_host_rsa_key";
-          rounds = 100;
-          type = "rsa";
-        }
-        {
-          comment = "key comment";
-          path = "${opts.path}/ssh-keys/ssh_host_ed25519_key";
-          rounds = 100;
-          type = "ed25519";
-        }
-      ];
     };
-  }
+
+    # Exists always because it is needed for SOPS and openssh
+    services.openssh.hostKeys = [
+      {
+        bits = 4096;
+        openSSHFormat = true;
+        path = "${opts.path}/ssh-keys/ssh_host_rsa_key";
+        rounds = 100;
+        type = "rsa";
+      }
+      {
+        comment = "key comment";
+        path = "${opts.path}/ssh-keys/ssh_host_ed25519_key";
+        rounds = 100;
+        type = "ed25519";
+      }
+    ];
+  };
+}

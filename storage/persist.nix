@@ -156,8 +156,8 @@ in
 
       onCalendar = "hourly";
       settings = {
-        snapshot_preserve = "6h 7d 1w 0m";
-        snapshot_preserve_min = "6h 7d 1w 0m";
+        snapshot_preserve = "6h 7d 1w 1m";
+        snapshot_preserve_min = "6h 7d 1w 1m";
         timestamp_format = "long-iso";
 
         volume = lib.attrsets.mapAttrs'

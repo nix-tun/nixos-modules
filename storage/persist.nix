@@ -152,38 +152,40 @@ in
       (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
     # Automatically snapshots the Persistent Subvolumes
-    services.btrbk.instances.btrbk.settings = {
-      snapshot_preserve = "6h 7d";
-      snapshot_preserve_min = "6h 7d";
+    services.btrbk.instances.btrbk = {
+
       onCalendar = "hourly";
-      timestamp_format = "long-iso";
+      settings = {
+        snapshot_preserve = "6h 7d";
+        snapshot_preserve_min = "6h 7d";
+        timestamp_format = "long-iso";
 
-      volume = lib.attrsets.mapAttrs'
-        (name: value: {
-          name = "${opts.path}/${name}";
-          value = {
-            subvolume = "${opts.path}/${name}";
-            snapshot_dir = ".snapshots";
-          };
-        })
-        (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
+        volume = lib.attrsets.mapAttrs'
+          (name: value: {
+            name = "${opts.path}/${name}";
+            value = {
+              subvolume = "${opts.path}/${name}";
+              snapshot_dir = ".snapshots";
+            };
+          })
+          (lib.attrsets.filterAttrs (name: value: value.backup) opts.subvolumes);
+      };
+
+      # Exists always because it is needed for SOPS and openssh
+      services.openssh.hostKeys = [
+        {
+          bits = 4096;
+          openSSHFormat = true;
+          path = "${opts.path}/ssh-keys/ssh_host_rsa_key";
+          rounds = 100;
+          type = "rsa";
+        }
+        {
+          comment = "key comment";
+          path = "${opts.path}/ssh-keys/ssh_host_ed25519_key";
+          rounds = 100;
+          type = "ed25519";
+        }
+      ];
     };
-
-    # Exists always because it is needed for SOPS and openssh
-    services.openssh.hostKeys = [
-      {
-        bits = 4096;
-        openSSHFormat = true;
-        path = "${opts.path}/ssh-keys/ssh_host_rsa_key";
-        rounds = 100;
-        type = "rsa";
-      }
-      {
-        comment = "key comment";
-        path = "${opts.path}/ssh-keys/ssh_host_ed25519_key";
-        rounds = 100;
-        type = "ed25519";
-      }
-    ];
-  };
-}
+  }

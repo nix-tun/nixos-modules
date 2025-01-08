@@ -1,35 +1,37 @@
-{
-  lib,
-  config,
-  pkgs,
-  inputs,
-  ...
+{ lib
+, config
+, pkgs
+, inputs
+, ...
 }: {
-  options.nix-tun.services.containers.nextcloud = let
-    t = lib.types;
-  in {
-    enable = lib.mkEnableOption "setup nextcloud";
-    hostname = lib.mkOption {
-      type = t.str;
+  options.nix-tun.services.containers.nextcloud =
+    let
+      t = lib.types;
+    in
+    {
+      enable = lib.mkEnableOption "setup nextcloud";
+      hostname = lib.mkOption {
+        type = t.str;
+      };
+      secretsFile = lib.mkOption {
+        type = t.path;
+        description = "path to the sops secret file for the adminPass";
+      };
+      extraApps = lib.mkOption {
+        description = "nextcloud apps to install";
+        type = t.listOf t.str;
+        default = [ ];
+      };
+      extraTrustedProxies = lib.mkOption {
+        type = t.listOf t.str;
+        default = [ ];
+      };
     };
-    secretsFile = lib.mkOption {
-      type = t.path;
-      description = "path to the sops secret file for the adminPass";
-    };
-    extraApps = lib.mkOption {
-      description = "nextcloud apps to install";
-      type = t.listOf t.str;
-      default = [];
-    };
-    extraTrustedProxies = lib.mkOption {
-      type = t.listOf t.str;
-      default = [];
-    };
-  };
 
-  config = let
-    opts = config.nix-tun.services.containers.nextcloud;
-  in
+  config =
+    let
+      opts = config.nix-tun.services.containers.nextcloud;
+    in
     lib.mkIf opts.enable {
       sops.secrets.nextcloud_pass = {
         mode = "444";
@@ -51,13 +53,13 @@
 
       nix-tun.services.traefik.services."nextcloud" = {
         router.rule = "Host(`${opts.hostname}`)";
-        servers = ["http://${config.containers.nextcloud.config.networking.hostName}:80"];
+        servers = [ "http://${config.containers.nextcloud.config.networking.hostName}:80" ];
       };
 
       containers.nextcloud = {
         autoStart = true;
         privateNetwork = true;
-	timeoutStartSec = "5min";
+        timeoutStartSec = "5min";
         hostAddress = "192.168.100.10";
         localAddress = "192.168.100.11";
         bindMounts = {
@@ -72,22 +74,22 @@
           host-config = config;
         };
 
-        config = {...}: {
+        config = { ... }: {
           services.nextcloud = {
             enable = true;
             package = pkgs.nextcloud30;
             https = true;
             hostName = opts.hostname;
-            phpExtraExtensions = all: [all.pdlib all.smbclient];
-	    notify_push = {
-	      enable = true;
-	      dbhost = "/run/mysqld/mysqld.sock";
-	      dbuser = "nextcloud@localhost:";
-	    };
+            phpExtraExtensions = all: [ all.pdlib all.smbclient ];
+            notify_push = {
+              enable = true;
+              dbhost = "/run/mysqld/mysqld.sock";
+              dbuser = "nextcloud@localhost:";
+            };
 
             database.createLocally = true;
-	    settings.trusted_proxies = [ "192.168.100.10"] ++ opts.extraTrustedProxies;
-            settings.trusted_domains = ["192.168.100.11" "192.168.100.10" opts.hostname];
+            settings.trusted_proxies = [ "192.168.100.10" ] ++ opts.extraTrustedProxies;
+            settings.trusted_domains = [ "192.168.100.11" "192.168.100.10" opts.hostname ];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
@@ -98,6 +100,7 @@
               "opcache.revalidate_freq" = "60";
               "opcache.interned_strings_buffer" = "16";
               "opcache.jit_buffer_size" = "128M";
+              "apc.shm_size" = "256M";
             };
 
             extraApps = lib.attrsets.getAttrs opts.extraApps config.services.nextcloud.package.packages.apps;
@@ -118,7 +121,7 @@
           networking = {
             firewall = {
               enable = true;
-              allowedTCPPorts = [80];
+              allowedTCPPorts = [ 80 ];
             };
             # Use systemd-resolved inside the container
             # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686

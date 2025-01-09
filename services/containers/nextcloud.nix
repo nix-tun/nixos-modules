@@ -85,6 +85,7 @@
               enable = true;
               dbhost = "/run/mysqld/mysqld.sock";
               dbuser = "nextcloud@localhost:";
+              bendDomainToLocalhost = true;
             };
 
             database.createLocally = true;

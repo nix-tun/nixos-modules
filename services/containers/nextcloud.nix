@@ -56,6 +56,17 @@
         servers = [ "http://${config.containers.nextcloud.config.networking.hostName}:80" ];
       };
 
+      services.traefik.dynamicConfigOptions = {
+        http.middlewares.traefikCache.plugin.httpCache = {
+          maxTtl = 600;
+          excludedResponseCodes = [
+            "400-499"
+            "300-399"
+            "500-599"
+          ];
+        };
+      };
+
       containers.nextcloud = {
         autoStart = true;
         privateNetwork = true;
@@ -102,7 +113,7 @@
               "opcache.revalidate_freq" = "60";
               "opcache.interned_strings_buffer" = "16";
               "opcache.jit_buffer_size" = "128M";
-              "apc.shm_size" = "256M";
+              "apc.shm_size" = "512M";
             };
 
             extraApps = lib.attrsets.getAttrs opts.extraApps config.services.nextcloud.package.packages.apps;

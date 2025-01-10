@@ -56,17 +56,6 @@
         servers = [ "http://${config.containers.nextcloud.config.networking.hostName}:80" ];
       };
 
-      services.traefik.dynamicConfigOptions = {
-        http.middlewares.traefikCache.plugin.httpCache = {
-          maxTtl = 600;
-          excludedResponseCodes = [
-            "400-499"
-            "300-399"
-            "500-599"
-          ];
-        };
-      };
-
       containers.nextcloud = {
         autoStart = true;
         privateNetwork = true;

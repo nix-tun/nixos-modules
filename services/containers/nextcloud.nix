@@ -75,6 +75,9 @@
         };
 
         config = { ... }: {
+          environment.systemPackages = [
+            pkgs.samba
+          ];
           services.nextcloud = {
             enable = true;
             package = pkgs.nextcloud30;

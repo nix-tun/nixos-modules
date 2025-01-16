@@ -70,11 +70,14 @@
         };
 
         specialArgs = {
-          inherit inputs pkgs;
+          inherit inputs;
           host-config = config;
         };
 
         config = { ... }: {
+          import = [
+
+          ];
           environment.systemPackages = [
             pkgs.samba
           ];

@@ -24,13 +24,13 @@ in
       '';
     };
     is_server = lib.mkEnableOption ''
-      Enable if this System is a Server, only Servers are backedup automatically,
+      Enable if this System is a Server, only Servers are backed up automatically,
       when given to the backup-server.nix module.
       
       This is because the backup-server module expects that, servers are reachable even if not actively used.
     '';
     subvolumes = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
+      type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
         options = {
           owner = lib.mkOption {
             type = lib.types.str;
@@ -62,6 +62,11 @@ in
             description = ''
               Should all directoris inside this subvolume be bind-mounted to their respective paths in / (according to their name).
             '';
+          };
+          path = lib.mkOption {
+            type = lib.types.str;
+            default = "${config.nix-tun.storage.persist.path}/${name}";
+            description = "Path this subvolume will be mounted at";
           };
           directories = lib.mkOption {
             type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
@@ -131,7 +136,7 @@ in
 
     environment.persistence = lib.mapAttrs'
       (name: value: {
-        name = "${opts.path}/${name}";
+        name = value.path;
         value = {
           hideMounts = true;
           directories =

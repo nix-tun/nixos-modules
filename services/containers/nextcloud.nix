@@ -52,8 +52,8 @@
       };
 
       nix-tun.services.traefik.services."nextcloud" = {
-        router.rule = "Host(`${opts.hostname}.containers`)";
-        servers = [ "http://${config.containers.nextcloud.config.networking.hostName}:80" ];
+        router.rule = "Host(`${opts.hostname}`)";
+        servers = [ "http://${config.containers.nextcloud.config.networking.hostName}.containers:80" ];
       };
 
       containers.nextcloud = {

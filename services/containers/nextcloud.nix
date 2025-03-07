@@ -88,7 +88,7 @@
               enable = true;
               dbhost = "/run/mysqld/mysqld.sock";
               dbuser = "nextcloud@localhost:";
-              nextcloudUrl = "http://127.0.0.1";
+              nextcloudUrl = "http://cloud.astahhu.de";
               bendDomainToLocalhost = true;
             };
 

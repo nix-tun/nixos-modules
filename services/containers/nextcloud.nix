@@ -88,8 +88,6 @@
               enable = true;
               dbhost = "/run/mysqld/mysqld.sock";
               dbuser = "nextcloud@localhost:";
-              nextcloudUrl = "http://cloud.astahhu.de";
-              bendDomainToLocalhost = true;
             };
 
             database.createLocally = true;

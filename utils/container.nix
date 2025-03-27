@@ -22,7 +22,6 @@
                         })
                       ] ++ (map (x: x.value) defs));
                       prefix = [ "nix-tun" "containers" name ];
-                      inherit (config) specialArgs;
                     }).config;
                   };
 

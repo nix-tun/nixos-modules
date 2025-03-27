@@ -83,6 +83,7 @@
       containers =
         lib.attrsets.mapAttrs
           (name: value: {
+            ephemeral = true;
             bindMounts =
               lib.attrsets.mapAttrs
                 (n: value: {
@@ -91,6 +92,10 @@
                   isReadOnly = false;
                 })
                 value.volumes;
+            config = { ... }: {
+              useHostResolvConf = lib.mkForce false;
+              services.resolved.enable = true;
+            };
           })
           config.nix-tun.utils.containers;
     };

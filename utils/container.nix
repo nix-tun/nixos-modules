@@ -14,7 +14,7 @@
                 {
                   type = lib.mkOptionType {
                     name = "Toplevel NixOs config";
-                    merge = loc: defs: (import "${pkgs}/nixos/lib/eval-config.nix" {
+                    merge = loc: defs: (import "${pkgs.path}/nixos/lib/eval-config.nix" {
                       modules = ([
                         ({ ... }: {
                           networking.useHostResolvConf = lib.mkForce false;

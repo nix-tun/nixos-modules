@@ -17,7 +17,7 @@
                     merge = loc: defs: (import "${pkgs.path}/nixos/lib/eval-config.nix" {
                       modules = ([
                         ({ ... }: {
-                          nixpkgs.hostPlatform = host.pkgs.stdenv.hostPlatform;
+                          nixpkgs = host.pkgs;
                           networking.useHostResolvConf = lib.mkForce false;
                           services.resolved.enable = true;
                         })

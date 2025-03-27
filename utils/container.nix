@@ -22,6 +22,8 @@
                         })
                       ] ++ (map (x: x.value) defs));
                       prefix = [ "nix-tun" "containers" name ];
+
+                      system = null;
                     }).config;
                   };
 

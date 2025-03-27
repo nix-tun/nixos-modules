@@ -8,13 +8,13 @@
     nix-tun.utils.containers = lib.mkOption {
       type = lib.types.attrsOf
         (lib.types.submodule
-          ({ config, options, name, ... }: {
+          ({ options, name, ... }: {
             options = {
               config = lib.mkOption
                 {
                   type = lib.mkOptionType {
                     name = "Toplevel NixOs config";
-                    merge = loc: defs: (import "${config.nixpkgs}/nixos/lib/eval-config.nix" {
+                    merge = loc: defs: (import "${pkgs}/nixos/lib/eval-config.nix" {
                       modules = ([
                         ({ ... }: {
                           networking.useHostResolvConf = lib.mkForce false;

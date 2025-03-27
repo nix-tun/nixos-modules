@@ -2,7 +2,7 @@
 , config
 , pkgs
 , ...
-}: {
+}@host: {
   # Utils to make the configuration of NixOs Containers more streamlined, in Context of the entire flake.
   options = {
     nix-tun.utils.containers = lib.mkOption {
@@ -17,6 +17,11 @@
                     merge = loc: defs: (import "${pkgs.path}/nixos/lib/eval-config.nix" {
                       modules = ([
                         ({ ... }: {
+                          nixpkgs =
+                            if options.nixpkgs?hostPlatform
+                            then { inherit (host.pkgs.stdenv) hostPlatform; }
+                            else { localSystem = host.pkgs.stdenv.hostPlatform; }
+                          ;
                           networking.useHostResolvConf = lib.mkForce false;
                           services.resolved.enable = true;
                         })

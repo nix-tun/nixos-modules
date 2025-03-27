@@ -12,21 +12,7 @@
             options = {
               config = lib.mkOption
                 {
-                  type = lib.mkOptionType {
-                    name = "Toplevel NixOs config";
-                    merge = loc: defs: (import "${pkgs.path}/nixos/lib/eval-config.nix" {
-                      modules = ([
-                        ({ ... }: {
-                          nixpkgs.pkgs = host.pkgs;
-                          networking.useHostResolvConf = lib.mkForce false;
-                          services.resolved.enable = true;
-                        })
-                      ] ++ (map (x: x.value) defs));
-                      prefix = [ "nix-tun" "containers" name ];
-
-                      system = null;
-                    }).config;
-                  };
+                  type = lib.types.deferredModule;
 
                 };
               volumes = lib.mkOption {

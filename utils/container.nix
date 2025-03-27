@@ -93,7 +93,7 @@
                 })
                 value.volumes;
             config = { ... }: {
-              useHostResolvConf = lib.mkForce false;
+              networking.useHostResolvConf = lib.mkForce false;
               services.resolved.enable = true;
             };
           })

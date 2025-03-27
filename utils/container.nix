@@ -23,6 +23,7 @@
 
                 };
               volumes = lib.mkOption {
+                default = { };
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.

@@ -15,7 +15,12 @@
                   type = lib.mkOptionType {
                     name = "Toplevel NixOs config";
                     merge = loc: defs: (import "${config.nixpkgs}/nixos/lib/eval-config.nix" {
-                      modules = (map (x: x.value) defs);
+                      modules = ([
+                        ({ ... }: {
+                          networking.useHostResolvConf = lib.mkForce false;
+                          services.resolved.enable = true;
+                        })
+                      ] ++ (map (x: x.value) defs));
                       prefix = [ "nix-tun" "containers" name ];
                       inherit (config) specialArgs;
                     }).config;
@@ -93,10 +98,7 @@
                   isReadOnly = false;
                 })
                 value.volumes;
-            config = { ... }: {
-              networking.useHostResolvConf = lib.mkForce false;
-              services.resolved.enable = true;
-            };
+            config = value.config;
           })
           config.nix-tun.utils.containers;
     };

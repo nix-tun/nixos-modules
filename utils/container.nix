@@ -12,8 +12,23 @@
             options = {
               config = lib.mkOption
                 {
-                  type = lib.types.deferredModule;
-
+                  type = lib.types.deferredModuleWith {
+                    staticModules = [
+                      ({}: {
+                        config = {
+                          systemd.network.enable = true;
+                          systemd.network.networks."10-eth0" = {
+                            matchConfig.Name = "eth0";
+                            networkConfig.DHCP = "ipv4";
+                            linkConfig.RequiredForOnline = "routable";
+                          };
+                        };
+                      })
+                    ];
+                  };
+                  description = ''
+                    A Nixos Conifugration for the Container.
+                  '';
                 };
               volumes = lib.mkOption {
                 default = { };
@@ -59,6 +74,26 @@
 
   config =
     {
+      assertions = [{
+        assertion = (config.nix-tun.utils.containers == { }) -> (config.nix-tun.storage.persist.enable);
+        message = ''
+          Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
+          As that module is used to the store the container data.
+        '';
+      }];
+
+      # The containers are assigned an ip address via DHCP.
+      # Containers should be reached via their hostnames
+      systemd.network.networks."80-container-ve" = {
+        matchConfig.Name = "ve-*";
+        networkConfig = {
+          Address = "192.168.100.0/24";
+          DHCPServer = true;
+          IPMasquerade = "ipv4";
+          IPv4Forwarding = true;
+        };
+      };
+
       nix-tun.storage.persist.subvolumes =
         lib.attrsets.mapAttrs'
           (name: value: {

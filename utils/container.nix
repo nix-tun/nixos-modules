@@ -14,7 +14,7 @@
                 {
                   type = lib.types.deferredModuleWith {
                     staticModules = [
-                      ({}: {
+                      ({ ... }: {
                         config = {
                           systemd.network.enable = true;
                           systemd.network.networks."10-eth0" = {

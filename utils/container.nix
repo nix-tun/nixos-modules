@@ -33,20 +33,22 @@
                 };
               domains = lib.mkOption {
                 type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
-                  port = lib.mkOption {
-                    type = lib.types.int;
-                  };
-                  entryPoints = {
-                    type = lib.types.listOf lib.types.str;
-                    default = "websecure";
-                    description = ''
-                      The external entrypoint name of the reverse proxy.
-                      If traefik is used this corresponds to the traefik entrypoint.
-                    '';
-                  };
-                  domain = lib.mkOption {
-                    type = lib.types.str;
-                    default = name;
+                  options = {
+                    port = lib.mkOption {
+                      type = lib.types.int;
+                    };
+                    entryPoints = lib.mkOption {
+                      type = lib.types.listOf (lib.types.str);
+                      default = [ "websecure" ];
+                      description = ''
+                        The external entrypoint name of the reverse proxy.
+                        If traefik is used this corresponds to the traefik entrypoint.
+                      '';
+                    };
+                    domain = lib.mkOption {
+                      type = lib.types.str;
+                      default = name;
+                    };
                   };
                 }));
                 default = { };
@@ -100,7 +102,7 @@
   config =
     {
       assertions = [{
-        assertion = (config.nix-tun.utils.containers == { }) -> (config.nix-tun.storage.persist.enable);
+        assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
         message = ''
           Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
           As that module is used to the store the container data.
@@ -128,9 +130,9 @@
                 value = {
                   router = {
                     rule = "Host(`${domain-value.domain}`)";
-                    entryPoints = value.entryPoints;
+                    entryPoints = domain-value.entryPoints;
                   };
-                  servers = [ "http://${name}.containers:${domain-value.port}" ];
+                  servers = [ "http://${name}.containers:${builtins.toString domain-value.port}" ];
                 };
               })
               value.domains))
@@ -166,7 +168,7 @@
                   isReadOnly = false;
                 })
                 value.volumes;
-            config = lib.modules.mergeModules value.config;
+            config = value.config;
           })
           config.nix-tun.utils.containers;
     };

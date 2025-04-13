@@ -40,40 +40,31 @@
         mode = "444";
       };
 
-      nix-tun.utils.containers.nextcloud.volumes = {
-        "/var/lib/mysql" = {
-          owner = "mysql";
-        };
-        "/var/lib/nextcloud" = {
-          owner = "nextcloud";
-          group = "nextcloud";
-          mode = "0755";
-        };
-      };
-
-      nix-tun.services.traefik.services."nextcloud" = {
-        router.rule = "Host(`${opts.hostname}`)";
-        servers = [ "http://${config.containers.nextcloud.config.networking.hostName}.containers:80" ];
-      };
-
       containers.nextcloud = {
-        autoStart = true;
-        privateNetwork = true;
-        timeoutStartSec = "5min";
-        hostAddress = "192.168.100.10";
-        localAddress = "192.168.100.11";
         bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.nextcloud_pass.path;
             mountPoint = config.sops.secrets.nextcloud_pass.path;
           };
         };
+      };
 
-        specialArgs = {
-          inherit inputs;
-          host-config = config;
+      nix-tun.utils.containers.nextcloud = {
+        domains.nextcloud = {
+          domain = "${opts.hostname}";
+          port = 80;
         };
 
+        volumes = {
+          "/var/lib/mysql" = {
+            owner = "mysql";
+          };
+          "/var/lib/nextcloud" = {
+            owner = "nextcloud";
+            group = "nextcloud";
+            mode = "0755";
+          };
+        };
         config = { ... }: {
           environment.systemPackages = [
             pkgs.samba
@@ -84,11 +75,7 @@
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [ all.pdlib all.smbclient ];
-            notify_push = {
-              enable = true;
-              dbhost = "/run/mysqld/mysqld.sock";
-              dbuser = "nextcloud@localhost:";
-            };
+            notify_push.enable = true;
 
             database.createLocally = true;
             settings.trusted_proxies = [ "192.168.100.10" ] ++ opts.extraTrustedProxies;

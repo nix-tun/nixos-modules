@@ -133,8 +133,8 @@
                   servers = [ "http://${name}.containers:${domain-value.port}" ];
                 };
               })
-              value.domains)
-              config.nix-tun.utils.containers)));
+              value.domains))
+            config.nix-tun.utils.containers));
 
       nix-tun.storage.persist.subvolumes =
         lib.attrsets.mapAttrs'

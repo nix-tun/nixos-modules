@@ -16,6 +16,7 @@
                     staticModules = [
                       ({ ... }: {
                         config = {
+                          networking.useHostResolvConf = lib.mkForce false;
                           systemd.network.enable = true;
                           systemd.network.networks."10-eth0" = {
                             matchConfig.Name = "eth0";
@@ -30,6 +31,30 @@
                     A Nixos Conifugration for the Container.
                   '';
                 };
+              domains = lib.mkOption {
+                type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
+                  port = lib.mkOption {
+                    type = lib.types.int;
+                  };
+                  entryPoints = {
+                    type = lib.types.listOf lib.types.str;
+                    default = "websecure";
+                    description = ''
+                      The external entrypoint name of the reverse proxy.
+                      If traefik is used this corresponds to the traefik entrypoint.
+                    '';
+                  };
+                  domain = lib.mkOption {
+                    type = lib.types.str;
+                    default = name;
+                  };
+                }));
+                default = { };
+                description = ''
+                  A mapping of domains to port address.
+                  This will expose the service at the internal `port`.
+                '';
+              };
               volumes = lib.mkOption {
                 default = { };
                 description = ''
@@ -94,6 +119,23 @@
         };
       };
 
+      nix-tun.services.traefik.services =
+        (lib.mkMerge
+          (lib.attrsets.mapAttrsToList
+            (name: value: (lib.attrsets.mapAttrs'
+              (domain-name: domain-value: {
+                name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+                value = {
+                  router = {
+                    rule = "Host(`${domain-value.domain}`)";
+                    entryPoints = value.entryPoints;
+                  };
+                  servers = [ "http://${name}.containers:${domain-value.port}" ];
+                };
+              })
+              value.domains)
+              config.nix-tun.utils.containers)));
+
       nix-tun.storage.persist.subvolumes =
         lib.attrsets.mapAttrs'
           (name: value: {
@@ -113,6 +155,9 @@
         lib.attrsets.mapAttrs
           (name: value: {
             ephemeral = true;
+            autoStart = true;
+            privateNetwork = true;
+            timeoutStartSec = "5min";
             bindMounts =
               lib.attrsets.mapAttrs
                 (n: value: {
@@ -121,7 +166,7 @@
                   isReadOnly = false;
                 })
                 value.volumes;
-            config = value.config;
+            config = lib.modules.mergeModules value.config;
           })
           config.nix-tun.utils.containers;
     };

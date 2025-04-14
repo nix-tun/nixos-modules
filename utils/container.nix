@@ -160,6 +160,9 @@
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
+            extraFlags = [
+              "--network-veth"
+            ];
             bindMounts =
               lib.attrsets.mapAttrs
                 (n: value: {

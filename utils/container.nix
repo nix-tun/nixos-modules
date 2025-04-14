@@ -101,13 +101,22 @@
 
   config =
     {
-      assertions = [{
-        assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
-        message = ''
-          Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
-          As that module is used to the store the container data.
-        '';
-      }];
+      assertions = [
+        {
+          assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
+          message = ''
+            Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
+            As that module is used to the store the container data.
+          '';
+        }
+        {
+          assertion = (config.nix-tun.utils.containers != { }) -> (config.systemd.network.enable);
+          message = ''
+            Nix-Tun containers require `systemd.network.enable` to be enabled.
+            As networkd is used to setup container networking.
+          '';
+        }
+      ];
 
       # The containers are assigned an ip address via DHCP.
       # Containers should be reached via their hostnames

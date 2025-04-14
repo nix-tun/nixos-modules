@@ -16,6 +16,7 @@
                     staticModules = [
                       ({ ... }: {
                         config = {
+                          system.stateVersion = "25.05";
                           networking.useHostResolvConf = lib.mkForce false;
                           systemd.network.enable = true;
                           systemd.network.networks."10-host0" = {
@@ -128,6 +129,7 @@
           IPMasquerade = "ipv4";
           IPv4Forwarding = true;
         };
+	linkConfig.RequiredForOnline = "enslaved";
       };
 
       nix-tun.services.traefik.services =

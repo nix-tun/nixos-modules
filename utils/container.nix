@@ -18,8 +18,8 @@
                         config = {
                           networking.useHostResolvConf = lib.mkForce false;
                           systemd.network.enable = true;
-                          systemd.network.networks."10-eth0" = {
-                            matchConfig.Name = "eth0";
+                          systemd.network.networks."10-host0" = {
+                            matchConfig.Name = "host0";
                             networkConfig.DHCP = "ipv4";
                             linkConfig.RequiredForOnline = "routable";
                           };

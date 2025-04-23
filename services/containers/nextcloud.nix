@@ -78,8 +78,8 @@
             notify_push.enable = true;
 
             database.createLocally = true;
-            settings.trusted_proxies = [ "192.168.100.10" ] ++ opts.extraTrustedProxies;
-            settings.trusted_domains = [ "192.168.100.11" "192.168.100.10" opts.hostname ];
+            settings.trusted_proxies = [ "192.168.0.0/16" "172.16.0.0/12" "10.0.0.0/8" ] ++ opts.extraTrustedProxies;
+            settings.trusted_domains = [ "nextcloud" opts.hostname ];
             config = {
               adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
               dbtype = "mysql";
@@ -108,17 +108,24 @@
             };
           };
 
+          services.nginx.virtualHosts."${opts.hostname}" = {
+            locations."^~ /push/".extraConfig = ''
+              proxy_set_header Host $host;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            '';
+            extraConfig = ''
+              gzip_types text/javascript;
+            '';
+          };
+
+
           networking = {
             firewall = {
               enable = true;
               allowedTCPPorts = [ 80 ];
             };
-            # Use systemd-resolved inside the container
-            # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
-            useHostResolvConf = lib.mkForce false;
           };
 
-          services.resolved.enable = true;
           system.stateVersion = "23.11";
         };
       };

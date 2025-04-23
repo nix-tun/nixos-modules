@@ -113,6 +113,8 @@
 
     users.users.traefik.extraGroups = lib.mkIf config.nix-tun.services.traefik.enable_docker [ "docker" ];
 
+    systemd.services.traefik.environment.LD_LIBRARY_PATH = config.system.nssModules.path;
+
     services.traefik = {
       enable = true;
       dynamicConfigOptions = {
@@ -152,7 +154,6 @@
           exposedByDefault = false;
           watch = true;
         };
-
         certificatesResolvers = {
           letsencrypt = {
             acme = {

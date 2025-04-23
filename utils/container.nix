@@ -16,13 +16,27 @@
                     staticModules = [
                       ({ ... }: {
                         config = {
-                          system.stateVersion = "25.05";
+                          system.stateVersion = lib.mkDefault config.system.stateVersion;
                           networking.useHostResolvConf = lib.mkForce false;
+                          networking.firewall.allowedUDPPorts = [ 5355 ];
                           systemd.network.enable = true;
-                          systemd.network.networks."10-host0" = {
-                            matchConfig.Name = "host0";
-                            networkConfig.DHCP = "ipv4";
-                            linkConfig.RequiredForOnline = "routable";
+                          # Network Setup from https://github.com/systemd/systemd/blob/c0ced8fc32edeb00a9969229f2a6ffe802ae5fd2/network/80-container-host0.network
+                          systemd.network.networks."70-container-host0" = {
+                            matchConfig = {
+                              Kind = "veth";
+                              Name = "host0";
+                              Virtualization = "container";
+                            };
+                            networkConfig = {
+                              DHCP = "yes";
+                              LinkLocalAddressing = "yes";
+                              LLDP = "yes";
+                              LLMNR = true;
+                              EmitLLDP = "customer-bridge";
+                            };
+                            dhcpConfig = {
+                              UseTimezone = "yes";
+                            };
                           };
                         };
                       })
@@ -117,19 +131,39 @@
             As networkd is used to setup container networking.
           '';
         }
+        {
+          assertion = (config.nix-tun.utils.containers != { }) -> (config.services.resolved.enable);
+          message = ''
+            Nix-Tun containers require `services.resolved.enable` to be enabled.
+            As resolved is used to resolve container hostnames. With the help of LLMNR.
+          '';
+        }
       ];
 
+      networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
+
       # The containers are assigned an ip address via DHCP.
+      # Follows the "offical" setup from systemd https://github.com/systemd/systemd/blob/c0ced8fc32edeb00a9969229f2a6ffe802ae5fd2/network/80-container-vz.network
       # Containers should be reached via their hostnames
-      systemd.network.networks."80-container-ve" = {
-        matchConfig.Name = "ve-*";
+      systemd.network.networks."70-container-vz" = {
+        matchConfig.Name = "vz-*";
         networkConfig = {
-          Address = "192.168.100.0/24";
+          Address = [
+            "0.0.0.0/24"
+          ];
           DHCPServer = true;
-          IPMasquerade = "ipv4";
-          IPv4Forwarding = true;
+          IPMasquerade = "both";
+          LLDP = "yes";
+          LLMNR = true;
+          EmitLLDP = "customer-bridge";
+          LinkLocalAddressing = "yes";
+          IPv6AcceptRA = "no";
+          IPv6SendRA = "yes";
         };
-	linkConfig.RequiredForOnline = "enslaved";
+        dhcpServerConfig = {
+          PersistLeases = "no";
+        };
+        linkConfig.RequiredForOnline = "no";
       };
 
       nix-tun.services.traefik.services =
@@ -143,7 +177,7 @@
                     rule = "Host(`${domain-value.domain}`)";
                     entryPoints = domain-value.entryPoints;
                   };
-                  servers = [ "http://${name}.containers:${builtins.toString domain-value.port}" ];
+                  servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
                 };
               })
               value.domains))
@@ -172,7 +206,8 @@
             privateNetwork = true;
             timeoutStartSec = "5min";
             extraFlags = [
-              "--network-veth"
+              "--network-zone=container"
+              "--resolv-conf=bind-stub"
             ];
             bindMounts =
               lib.attrsets.mapAttrs

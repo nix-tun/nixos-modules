@@ -31,7 +31,10 @@
           ./services/containers/nextcloud.nix
           ./services/containers/authentik.nix
           ./services/containers/onlyoffice.nix
+          ./services/prometheus/default.nix
+          ./services/grafana.nix
           ./utils/container.nix
+          ./utils/prometheus-exporter.nix
           #./services/matrix.nix
 
           inputs.impermanence.nixosModules.impermanence

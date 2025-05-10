@@ -1,0 +1,5 @@
+{ ... }: {
+  imports = [
+    ./node-exporter.nix
+  ];
+}

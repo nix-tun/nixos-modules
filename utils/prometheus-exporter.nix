@@ -1,12 +1,14 @@
 { pkgs, lib, ... }: {
   options = {
-    nix-tun.metrics.prometheus-exporter = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({ ... }: { }));
+    nix-tun.utils.prometheus-exporter = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.listOf lib.types.string);
       description = ''
-        An interface to advertise prometheus exporters this system exposes.
+        A map of job-names to domains, under which prometheus exporter can be reached.
+        Job names should be equivalent, to the scraper type.
+        e.g. node-exporter for  prometheus-node-exporter
       '';
+      default = { };
     };
   };
 
-  config = { };
 }

@@ -19,25 +19,11 @@
                           system.stateVersion = lib.mkDefault config.system.stateVersion;
                           networking.useHostResolvConf = lib.mkForce false;
                           networking.firewall.allowedUDPPorts = [ 5355 ];
-                          systemd.network.enable = true;
-                          # Network Setup from https://github.com/systemd/systemd/blob/c0ced8fc32edeb00a9969229f2a6ffe802ae5fd2/network/80-container-host0.network
-                          systemd.network.networks."70-container-host0" = {
-                            matchConfig = {
-                              Kind = "veth";
-                              Name = "host0";
-                              Virtualization = "container";
-                            };
-                            networkConfig = {
-                              DHCP = "yes";
-                              LinkLocalAddressing = "yes";
-                              LLDP = "yes";
-                              LLMNR = true;
-                              EmitLLDP = "customer-bridge";
-                            };
-                            dhcpConfig = {
-                              UseTimezone = "yes";
-                            };
+                          networking.firewall.allowedTCPPorts = [ 5355 ];
+                          services.resolved = {
+                            enable = true;
                           };
+                          systemd.network.enable = true;
                         };
                       })
                     ];
@@ -141,30 +127,7 @@
       ];
 
       networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
-
-      # The containers are assigned an ip address via DHCP.
-      # Follows the "offical" setup from systemd https://github.com/systemd/systemd/blob/c0ced8fc32edeb00a9969229f2a6ffe802ae5fd2/network/80-container-vz.network
-      # Containers should be reached via their hostnames
-      systemd.network.networks."70-container-vz" = {
-        matchConfig.Name = "vz-*";
-        networkConfig = {
-          Address = [
-            "0.0.0.0/24"
-          ];
-          DHCPServer = true;
-          IPMasquerade = "both";
-          LLDP = "yes";
-          LLMNR = true;
-          EmitLLDP = "customer-bridge";
-          LinkLocalAddressing = "yes";
-          IPv6AcceptRA = "no";
-          IPv6SendRA = "yes";
-        };
-        dhcpServerConfig = {
-          PersistLeases = "no";
-        };
-        linkConfig.RequiredForOnline = "no";
-      };
+      networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
 
       nix-tun.services.traefik.services =
         (lib.mkMerge

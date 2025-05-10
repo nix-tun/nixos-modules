@@ -230,16 +230,15 @@
           };
 
           entryPoints =
-            lib.attrsets.filterAttrs (n: v: n != "port")
-              (lib.attrsets.mapAttrs
-                (name: value:
-                  lib.attrsets.mergeAttrsList [
-                    {
-                      address = ":${toString value.port}";
-                    }
-                    value
-                  ])
-                config.nix-tun.services.traefik.entrypoints);
+            (lib.attrsets.mapAttrs
+              (name: value:
+                lib.attrsets.mergeAttrsList [
+                  {
+                    address = ":${toString value.port}";
+                  }
+                  (lib.attrsets.filterAttrs (n: v: n != "port") value)
+                ])
+              config.nix-tun.services.traefik.entrypoints);
 
           api = {
             dashboard = true;

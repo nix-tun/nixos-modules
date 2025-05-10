@@ -9,7 +9,7 @@
       type = lib.types.unspecified;
       default = { };
       description = ''
-        The list of nixos configurations from the systems to bakups. Evaluates the nix-tun.storage.persist.profile for backups
+        The list of nixos configurations from the systems to backups. Evaluates the nix-tun.storage.persist.profile for backups
       '';
     };
     server = lib.mkOption {

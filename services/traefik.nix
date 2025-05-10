@@ -132,8 +132,8 @@
               type = lib.types.str;
               default = "3s";
               description = ''
-                                How long traefik waits for an response, before it deems the server unreachable.
-                	      '';
+                How long traefik waits for an response, before it deems the server unreachable.
+              '';
             };
           };
         };
@@ -229,8 +229,6 @@
             };
           };
 
-
-
           entryPoints =
             lib.attrsets.filterAttrs (n: v: n != "port")
               (lib.attrsets.mapAttrs
@@ -240,9 +238,6 @@
                       address = ":${toString value.port}";
                     }
                     value
-                    {
-                      port = null;
-                    }
                   ])
                 config.nix-tun.services.traefik.entrypoints);
 

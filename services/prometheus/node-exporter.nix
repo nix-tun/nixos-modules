@@ -15,7 +15,7 @@
 
     nix-tun.services.traefik = {
       services.node-exporter = {
-        servers = [ "http://localhost:9100" ];
+        servers = [ "http://localhost:9101" ];
         router = {
           middlewares = [
             "node-exporter-auth"
@@ -44,6 +44,8 @@
     services.prometheus.exporters.node = {
       openFirewall = true;
       enable = true;
+      listenAddress = "127.0.0.1";
+      port = 9101;
       enabledCollectors = [
         "systemd"
         "network_route"

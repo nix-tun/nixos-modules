@@ -8,7 +8,7 @@
     '';
   };
 
-  config = lib.mkIf config.nix-tun.services.prometheus.node-exporter {
+  config = lib.mkIf config.nix-tun.services.prometheus.kea-exporter {
     nix-tun.utils.prometheus-exporter.kea = [
       "kea-exporter.${config.networking.fqdnOrHostName}:9100"
     ];

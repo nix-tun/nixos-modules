@@ -45,13 +45,17 @@
       router.tls.enable = false;
     };
 
-    sops.secrets.prometheus-node-exporter-pass = {
-      uid = config.containers.grafana.config.users.users.prometheus.uid;
-    };
-
-    sops.secrets.prometheus-traefik-pass = {
-      uid = config.containers.grafana.config.users.users.prometheus.uid;
-    };
+    sops.secrets.prometheus-traefik-pass = lib.attrsets.mapAttrs'
+      (job-name: targets:
+        {
+          name = "prometheus-${job-name}-pass";
+          value.uid = config.containers.grafana.config.users.users.prometheus.uid;
+        }
+      )
+      (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
+        (lib.attrsets.mapAttrsToList
+          (host: config: config.config.nix-tun.utils.prometheus-exporter)
+          config.nix-tun.services.grafana.prometheus.nixosConfigs));
 
     nix-tun.utils.containers.grafana = {
       volumes = {

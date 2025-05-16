@@ -6,6 +6,12 @@
         description = "The domain from which grafana should be reached";
         type = lib.types.str;
       };
+      oauth = lib.mkOption {
+        type = lib.types.attrs;
+        description = ''
+          The o-auth options for grafana. For reference: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/
+        '';
+      };
       prometheus = {
         nixosConfigs = lib.mkOption {
           type = lib.types.unspecified;
@@ -93,20 +99,7 @@
             };
             "auth.basic".enable = false;
             auth.disable_login_form = true;
-            "auth.generic_oauth" = {
-              enabled = true;
-              name = "AStA Intern";
-              allow_sign_up = true;
-              client_id = "grafana";
-              scopes = "openid email profile offline_access roles";
-              email_attribute_path = "email";
-              login_attribute_path = "username";
-              name_attribute_path = "full_name";
-              auth_url = "https://keycloak.nix-tun.de/realms/astaintern/protocol/openid-connect/auth";
-              token_url = "https://keycloak.nix-tun.de/realms/astaintern/protocol/openid-connect/token";
-              api_url = "https://keycloak.nix-tun.de/realms/astaintern/protocol/openid-connect/userinfo";
-              role_attribute_path = "contains(roles[*], 'Admin') && 'Admin' || contains(roles[*], 'Editor') && 'Editor' || 'Viewer'";
-            };
+            "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
           };
         };
         networking.firewall.allowedTCPPorts = [ 3000 ];

@@ -15,7 +15,7 @@
 
     nix-tun.services.traefik = {
       services.node-exporter = {
-        servers = [ "http://node-exporter:9100" ];
+        servers = [ "http://localhost:9100" ];
         router = {
           middlewares = [
             "node-exporter-auth"
@@ -41,37 +41,13 @@
       };
     };
 
-    containers.node-exporter = {
-      autoStart = true;
-      timeoutStartSec = "5min";
-      privateNetwork = true;
-      bindMounts = {
-        "/host" = {
-          hostPath = "/";
-          isReadOnly = true;
-        };
-      };
-    };
-
-
-    nix-tun.utils.containers.node-exporter = {
-      config = {
-        systemd.services.prometheus-node-exporter.serviceConfig.BindPaths = "/host/run/dbus:/run/dbus";
-        services.prometheus.exporters.node = {
-          openFirewall = true;
-          enable = true;
-          enabledCollectors = [
-            "systemd"
-            "network_route"
-          ];
-          extraFlags = [
-            "--path.rootfs=/host/"
-            "--path.sysfs=/host/sys"
-            "--path.procfs=/host/proc"
-            "--path.udev.data=/host/run/udev/data"
-          ];
-        };
-      };
+    services.prometheus.exporters.node = {
+      openFirewall = true;
+      enable = true;
+      enabledCollectors = [
+        "systemd"
+        "network_route"
+      ];
     };
   };
 } 

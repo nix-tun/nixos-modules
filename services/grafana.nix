@@ -33,81 +33,85 @@
       autoStart = true;
       privateNetwork = true;
       timeoutStartSec = "5min";
-      bindMounts."${config.sops.secrets.prometheus-node-exporter-pass.path}" = {
-        hostPath = config.sops.secrets.prometheus-node-exporter-pass.path;
-      };
-      bindMounts."${config.sops.secrets.prometheus-traefik-pass.path}" = {
-        hostPath = config.sops.secrets.prometheus-traefik-pass.path;
-      };
-    };
+      bindMounts = lib.attrsets.mapAttrs'
+        (job-name: targets:
+          {
+            name = config.sops.secrets."prometheus-${job-name}-pass".path;
+            value.hostPath = config.sops.secrets."prometheus-${job-name}-pass".path;
+          }
+        )
+        (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
+          (lib.attrsets.mapAttrsToList
+            (host: config: config.config.nix-tun.utils.prometheus-exporter)
+            config.nix-tun.services.grafana.prometheus.nixosConfigs));
 
-    nix-tun.services.traefik.services."grafana-grafana" = {
-      router.tls.enable = false;
-    };
-
-    sops.secrets = lib.attrsets.mapAttrs'
-      (job-name: targets:
-        {
-          name = "prometheus-${job-name}-pass";
-          value.uid = config.containers.grafana.config.users.users.prometheus.uid;
-        }
-      )
-      (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
-        (lib.attrsets.mapAttrsToList
-          (host: config: config.config.nix-tun.utils.prometheus-exporter)
-          config.nix-tun.services.grafana.prometheus.nixosConfigs));
-
-    nix-tun.utils.containers.grafana = {
-      volumes = {
-        "/var/lib/grafana" = { };
-        "/var/lib/prometheus2" = { };
+      nix-tun.services.traefik.services."grafana-grafana" = {
+        router.tls.enable = false;
       };
-      domains = {
-        grafana = {
-          domain = config.nix-tun.services.grafana.domain;
-          port = 3000;
+
+      sops.secrets = lib.attrsets.mapAttrs'
+        (job-name: targets:
+          {
+            name = "prometheus-${job-name}-pass";
+            value.uid = config.containers.grafana.config.users.users.prometheus.uid;
+          }
+        )
+        (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
+          (lib.attrsets.mapAttrsToList
+            (host: config: config.config.nix-tun.utils.prometheus-exporter)
+            config.nix-tun.services.grafana.prometheus.nixosConfigs));
+
+      nix-tun.utils.containers.grafana = {
+        volumes = {
+          "/var/lib/grafana" = { };
+          "/var/lib/prometheus2" = { };
         };
-      };
-      config = { ... }: {
-        boot.isContainer = true;
-        services.prometheus = {
-          enable = true;
-          port = 9000;
-          scrapeConfigs = lib.attrsets.mapAttrsToList
-            (job-name: targets:
-              {
-                job_name = job-name;
-                basic_auth = {
-                  username = job-name;
-                  password_file = config.sops.secrets."prometheus-${job-name}-pass".path;
-                };
-                scheme = "http";
-                static_configs = [{
-                  targets = targets;
-                }];
-              }
-            )
-            (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
-              (lib.attrsets.mapAttrsToList
-                (host: config: config.config.nix-tun.utils.prometheus-exporter)
-                config.nix-tun.services.grafana.prometheus.nixosConfigs));
-        };
-
-        services.grafana = {
-          enable = true;
-          settings = {
-            server = {
-              domain = config.nix-tun.services.grafana.domain;
-              http_addr = "0.0.0.0";
-              root_url = "https://${config.nix-tun.services.grafana.domain}";
-            };
-            "auth.basic".enable = false;
-            auth.disable_login_form = true;
-            "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
+        domains = {
+          grafana = {
+            domain = config.nix-tun.services.grafana.domain;
+            port = 3000;
           };
         };
-        networking.firewall.allowedTCPPorts = [ 3000 ];
+        config = { ... }: {
+          boot.isContainer = true;
+          services.prometheus = {
+            enable = true;
+            port = 9000;
+            scrapeConfigs = lib.attrsets.mapAttrsToList
+              (job-name: targets:
+                {
+                  job_name = job-name;
+                  basic_auth = {
+                    username = job-name;
+                    password_file = config.sops.secrets."prometheus-${job-name}-pass".path;
+                  };
+                  scheme = "http";
+                  static_configs = [{
+                    targets = targets;
+                  }];
+                }
+              )
+              (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
+                (lib.attrsets.mapAttrsToList
+                  (host: config: config.config.nix-tun.utils.prometheus-exporter)
+                  config.nix-tun.services.grafana.prometheus.nixosConfigs));
+          };
+
+          services.grafana = {
+            enable = true;
+            settings = {
+              server = {
+                domain = config.nix-tun.services.grafana.domain;
+                http_addr = "0.0.0.0";
+                root_url = "https://${config.nix-tun.services.grafana.domain}";
+              };
+              "auth.basic".enable = false;
+              auth.disable_login_form = true;
+              "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
+            };
+          };
+          networking.firewall.allowedTCPPorts = [ 3000 ];
+        };
       };
     };
-  };
-}
+  }

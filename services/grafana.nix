@@ -45,7 +45,7 @@
       router.tls.enable = false;
     };
 
-    sops.secrets.prometheus-traefik-pass = lib.attrsets.mapAttrs'
+    sops.secrets = lib.attrsets.mapAttrs'
       (job-name: targets:
         {
           name = "prometheus-${job-name}-pass";

@@ -180,7 +180,14 @@
                   isReadOnly = false;
                 })
                 value.volumes;
-            config = value.config;
+            config = lib.mkMerge [
+              ({ ... }: {
+                config = {
+                  networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
+                };
+              })
+              value.config
+            ];
           })
           config.nix-tun.utils.containers;
     };

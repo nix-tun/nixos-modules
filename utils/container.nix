@@ -24,9 +24,9 @@
                             enable = true;
                           };
                           systemd.network.enable = true;
-                          systemd.extraConfig = ''
-                            LimitNOFILE=8192:524288
-                          '';
+                          systemd.settings.Manager = {
+                            LimitNOFILE = "8192:524288";
+                          };
                         };
                       })
                     ];

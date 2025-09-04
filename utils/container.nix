@@ -25,7 +25,7 @@
                           };
                           systemd.network.enable = true;
                           systemd.settings.Manager = {
-                            LimitNOFILE = "8192:524288";
+                            DefaultLimitNOFILE = "8192:524288";
                           };
                         };
                       })

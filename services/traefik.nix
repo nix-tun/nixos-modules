@@ -160,6 +160,8 @@
       '';
     };
 
+    systemd.services.traefik.serviceConfig.LimitNPROC = lib.mkForce 8192;
+
     services.traefik = {
       enable = true;
       dynamicConfigOptions = {

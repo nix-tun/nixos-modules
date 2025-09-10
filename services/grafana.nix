@@ -64,8 +64,12 @@
 
     nix-tun.utils.containers.grafana = {
       volumes = {
-        "/var/lib/grafana" = { };
-        "/var/lib/prometheus2" = { };
+        "/var/lib/grafana" = {
+          owner = "grafana";
+        };
+        "/var/lib/prometheus2" = {
+          owner = "prometheus";
+        };
       };
       domains = {
         grafana = {

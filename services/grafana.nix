@@ -55,6 +55,11 @@
     nix-tun.services.traefik.services."grafana-grafana" = {
       router.tls.enable = false;
     };
+    nix-tun.services.traefik.services."grafana-loki" = {
+      router.tls.enable = false;
+    };
+
+
 
     sops.secrets = lib.attrsets.mapAttrs'
       (job-name: targets:
@@ -84,6 +89,10 @@
         grafana = {
           domain = config.nix-tun.services.grafana.domain;
           port = 3000;
+        };
+        loki = {
+          domain = config.nix-tun.services.grafana.loki.domain;
+          port = 3100;
         };
       };
       config = { ... }: {
@@ -189,7 +198,7 @@
             "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
           };
         };
-        networking.firewall.allowedTCPPorts = [ 3000 ];
+        networking.firewall.allowedTCPPorts = [ 3000 3100 ];
       };
     };
   };

@@ -1,7 +1,7 @@
 { pkgs, lib, ... }: {
   options = {
     nix-tun.utils.prometheus-exporter = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.listOf lib.types.string);
+      type = lib.types.attrsOf (lib.types.listOf lib.types.str);
       description = ''
         A map of job-names to domains, under which prometheus exporter can be reached.
         Job names should be equivalent, to the scraper type.

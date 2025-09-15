@@ -24,9 +24,6 @@
                             enable = true;
                           };
                           systemd.network.enable = true;
-                          systemd.settings.Manager = {
-                            DefaultLimitNOFILE = "8192:524288";
-                          };
                         };
                       })
                     ];
@@ -153,14 +150,7 @@
         lib.attrsets.mapAttrs'
           (name: value: {
             name = "containers/${name}";
-            value.directories =
-              lib.attrsets.mapAttrs
-                (_: value: {
-                  owner = builtins.toString config.containers."${name}".config.users.users.${value.owner}.uid;
-                  group = builtins.toString config.containers."${name}".config.users.groups.${value.group}.gid;
-                  mode = value.mode;
-                })
-                value.volumes;
+            value.directories = lib.attrsets.mapAttrs (_: _: { }) value.volumes;
           })
           config.nix-tun.utils.containers;
 
@@ -171,18 +161,13 @@
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
-            extraFlags = [
-              "--network-zone=container"
-              "--resolv-conf=bind-stub"
+            extraFlags = lib.mkMerge [
+              [
+                "--network-zone=container"
+                "--resolv-conf=bind-stub"
+              ]
+              (lib.attrsets.mapAttrsToList (n: v: "--bind ${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:X-mount.owner=${v.owner},X-mount.group=${v.group},X-mount.mode=${v.mode}") value.volumes)
             ];
-            bindMounts =
-              lib.attrsets.mapAttrs
-                (n: value: {
-                  hostPath = "${config.nix-tun.storage.persist.path}/containers/${name}/${n}";
-                  mountPoint = n;
-                  isReadOnly = false;
-                })
-                value.volumes;
             config = lib.mkMerge [
               ({ ... }: {
                 config = {

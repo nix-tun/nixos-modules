@@ -155,11 +155,7 @@
             name = "containers/${name}";
             value.directories =
               lib.attrsets.mapAttrs
-                (_: value: {
-                  owner = builtins.toString config.containers."${name}".config.users.users.${value.owner}.uid;
-                  group = builtins.toString config.containers."${name}".config.users.groups.${value.group}.gid;
-                  mode = value.mode;
-                })
+                (_: value: { })
                 value.volumes;
           })
           config.nix-tun.utils.containers;
@@ -171,26 +167,23 @@
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
-            extraFlags = [
-              "--network-zone=container"
-              "--resolv-conf=bind-stub"
+            privateUsers = "pick";
+            extraFlags = lib.mkMerge [
+              [
+                "--network-zone=container"
+                "--resolv-conf=bind-stub"
+              ]
+              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:owneridmap"))
             ];
-            bindMounts =
-              lib.attrsets.mapAttrs
-                (n: value: {
-                  hostPath = "${config.nix-tun.storage.persist.path}/containers/${name}/${n}";
-                  mountPoint = n;
-                  isReadOnly = false;
+            config = lib.mkMerge
+              [
+                ({ ... }: {
+                  config = {
+                    networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
+                  };
                 })
-                value.volumes;
-            config = lib.mkMerge [
-              ({ ... }: {
-                config = {
-                  networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
-                };
-              })
-              value.config
-            ];
+                value.config
+              ];
           })
           config.nix-tun.utils.containers;
     };

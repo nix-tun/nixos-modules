@@ -127,7 +127,7 @@
               configs = [
                 {
                   from = "1970-01-01";
-                  store = "boltdb-shipper";
+                  store = "tsdb";
                   object_store = "filesystem";
                   schema = "v13";
                   index = {
@@ -138,9 +138,9 @@
               ];
             };
             storage_config = {
-              boltdb_shipper = {
-                active_index_directory = "/var/lib/loki/boltdb-shipper-active";
-                cache_location = "/var/lib/loki/boltdb-shipper-cache";
+              tsdb = {
+                active_index_directory = "/var/lib/loki/tsdb-shipper-active";
+                cache_location = "/var/lib/loki/tsdb-shipper-cache";
                 cache_ttl = "24h";
               };
               filesystem = {

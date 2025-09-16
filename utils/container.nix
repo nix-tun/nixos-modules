@@ -181,8 +181,8 @@
               [
                 ({ ... }: {
                   config = {
-                    systemd.tmpfiles.rules =
-                      (lib.attrsets.mapAttrsToList (n: v: "d ${n} ${v.mode} ${v.owner} ${v.group} -") value.volumes);
+                    boot.initrd.systemd.tmpfiles.settings."10-container-volumes" =
+                      (lib.attrsets.mapAttrs (n: v: { d = { mode = v.mode; owner = v.owner; group = v.group; age = "-"; }; }) value.volumes);
                     networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
                   };
                 })

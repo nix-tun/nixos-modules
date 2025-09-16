@@ -167,7 +167,7 @@
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
-	    # This ensures each container uses seperate uids
+            # This ensures each container uses seperate uids
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
               [
@@ -181,6 +181,8 @@
               [
                 ({ ... }: {
                   config = {
+                    systemd.tmpfiles.rules =
+                      (lib.attrsets.mapAttrsToList (n: v: "d ${n} ${v.mode} ${v.owner} ${v.group} -") value.volumes);
                     networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
                   };
                 })

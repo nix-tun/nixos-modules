@@ -167,13 +167,15 @@
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
+	    # This ensures each container uses seperate uids
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
               [
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
               ]
-              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:owneridmap"))
+              # This maps the owner of the directory inside the container to the owner of the directory outside the container
+              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:owneridmap") value.volumes)
             ];
             config = lib.mkMerge
               [

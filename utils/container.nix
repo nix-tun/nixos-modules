@@ -142,9 +142,10 @@
       networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
       networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
 
-      sops.secrets = (lib.mkMerge
+      sops.secrets = (lib.mkMerge lib.lists.flatten
         (lib.attrsets.mapAttrsToList
-          (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets)) config.nix-tun.utils.containers));
+          (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets))
+          config.nix-tun.utils.containers));
 
       nix-tun.services.traefik.services =
         (lib.mkMerge

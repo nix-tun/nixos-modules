@@ -113,7 +113,7 @@
     };
   };
 
-  config = [
+  config = lib.mkMerge ([
     {
       assertions = [
         {
@@ -191,7 +191,7 @@
           (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${container-name}/${n}:${n}:idmap") container.volumes)
           ++
           (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets);
-        config = lib.modules.mergeModules
+        config = lib.mkMerge
           [
             ({ ... }: {
               config = {
@@ -204,5 +204,5 @@
           ];
       };
     })
-    config.nix-tun.utils.containers);
+    config.nix-tun.utils.containers));
 }

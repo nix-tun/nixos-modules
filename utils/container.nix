@@ -113,7 +113,7 @@
     };
   };
 
-  config = lib.mkMerge ([
+  config = [
     {
       assertions = [
         {
@@ -181,16 +181,17 @@
         timeoutStartSec = "5min";
         # This ensures each container uses seperate uids
         privateUsers = "pick";
-        extraFlags = lib.mkMerge [
+        extraFlags =
           [
             "--network-zone=container"
             "--resolv-conf=bind-stub"
           ]
+          ++
           # This maps the ids inside the container to ids on the host
           (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${container-name}/${n}:${n}:idmap") container.volumes)
-          (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets)
-        ];
-        config = lib.mkMerge
+          ++
+          (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets);
+        config = lib.modules.mergeModules
           [
             ({ ... }: {
               config = {
@@ -203,5 +204,5 @@
           ];
       };
     })
-    config.nix-tun.utils.containers));
+    config.nix-tun.utils.containers);
 }

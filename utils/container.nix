@@ -113,28 +113,35 @@
     };
   };
 
-  config =
+  config = lib.mkIf (config.nix-tun.utils.containers != { })
     {
       assertions = [
         {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
+          assertion = (config.nix-tun.storage.persist.enable);
           message = ''
             Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
             As that module is used to the store the container data.
           '';
         }
         {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.systemd.network.enable);
+          assertion = (config.systemd.network.enable);
           message = ''
             Nix-Tun containers require `systemd.network.enable` to be enabled.
             As networkd is used to setup container networking.
           '';
         }
         {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.services.resolved.enable);
+          assertion = (config.services.resolved.enable);
           message = ''
             Nix-Tun containers require `services.resolved.enable` to be enabled.
             As resolved is used to resolve container hostnames. With the help of LLMNR.
+          '';
+        }
+        {
+          assertion = (config.sops.useTmpfs);
+          message = ''
+            Nix-Tun containers require `services.sops.useTmpfs` to be enabled.
+            As tmpfs is needed to idmap secrets.
           '';
         }
       ];
@@ -145,7 +152,7 @@
       sops.secrets = (lib.mkMerge
         (lib.lists.flatten
           (lib.attrsets.mapAttrsToList
-            (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets))
+            (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0555"; }; }) value.secrets))
             config.nix-tun.utils.containers)));
 
       nix-tun.services.traefik.services =
@@ -196,7 +203,7 @@
               ]
               # This maps the owner of the directory inside the container to the owner of the directory outside the container
               (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)
-              (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${name}-${secret}".path}:${config.sops.secrets."${name}-${secret}".path}:idmap") value.secrets)
+              (lib.lists.map (secret: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets)
             ];
             config = lib.mkMerge
               [

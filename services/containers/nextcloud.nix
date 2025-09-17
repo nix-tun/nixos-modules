@@ -44,7 +44,7 @@
         bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.nextcloud_pass.path;
-            mountPoint = config.sops.secrets.nextcloud_pass.path;
+            mountPoint = "${config.sops.secrets.nextcloud_pass.path}:idmap";
           };
         };
       };

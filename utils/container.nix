@@ -113,7 +113,7 @@
     };
   };
 
-  config = lib.mkMerge ([
+  config = lib.mkDefinition (lib.mkMerge ([
     {
       assertions = [
         {
@@ -204,5 +204,5 @@
           ];
       };
     })
-    config.nix-tun.utils.containers));
+    config.nix-tun.utils.containers)));
 }

@@ -114,6 +114,7 @@
   };
 
   config = lib.mkDefinition {
+    file = "utils/container.nix";
     value = lib.mkMerge
       ([
         {

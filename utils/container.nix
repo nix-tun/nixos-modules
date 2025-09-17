@@ -144,7 +144,7 @@
 
       sops.secrets = (lib.mkMerge
         (lib.attrsets.mapAttrsToList
-          (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets)) config.nix-tun.utils.container));
+          (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets)) config.nix-tun.utils.containers));
 
       nix-tun.services.traefik.services =
         (lib.mkMerge

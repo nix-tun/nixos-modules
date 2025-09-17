@@ -94,6 +94,16 @@
                   };
                 }));
               };
+              secrets = lib.mkOption {
+                default = [ ];
+                description = ''
+                  Secrets to which the container needs access to. This will autmatically setup the secrets on the host and bind-mount them as read-only inside the container.
+                  The mode is always set to 0500, and owned by root (inside and outside the container).
+                  A secret with the name "x" will create a secret with the name "container-x" on the host.
+                  And mounted inside the container as "/secret/x".
+                '';
+                type = lib.types.listOf lib.types.str;
+              };
             };
           }));
       default = { };
@@ -103,7 +113,7 @@
     };
   };
 
-  config =
+  config = lib.mkMerge ([
     {
       assertions = [
         {
@@ -132,63 +142,66 @@
       networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
       networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
 
-      nix-tun.services.traefik.services =
-        (lib.mkMerge
-          (lib.attrsets.mapAttrsToList
-            (name: value: (lib.attrsets.mapAttrs'
-              (domain-name: domain-value: {
-                name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
-                value = {
-                  router = {
-                    rule = "Host(`${domain-value.domain}`)";
-                    entryPoints = domain-value.entryPoints;
-                  };
-                  servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
-                };
-              })
-              value.domains))
-            config.nix-tun.utils.containers));
+    }
+  ] ++ (lib.attrsets.mapAttrsToList
+    (container-name: container: {
+      sops.secrets = (lib.lists.map (secret-name: { "${container-name}-${secret-name}" = { mode = "0500"; }; }) container.secrets);
 
-      nix-tun.storage.persist.subvolumes =
-        lib.attrsets.mapAttrs'
-          (name: value: {
-            name = "containers/${name}";
-            value.directories =
-              lib.attrsets.mapAttrs
-                (_: value: { })
-                value.volumes;
-          })
-          config.nix-tun.utils.containers;
+      nix-tun.services.traefik.services = lib.attrsets.mapAttrs'
+        (domain-name: domain-value: {
+          name = "${container-name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+          value = {
+            router = {
+              rule = "Host(`${domain-value.domain}`)";
+              entryPoints = domain-value.entryPoints;
+            };
+            servers = [ "http://${container-name}:${builtins.toString domain-value.port}" ];
+          };
+        })
+        container.domains;
 
-      containers =
-        lib.attrsets.mapAttrs
-          (name: value: {
-            ephemeral = true;
-            autoStart = true;
-            privateNetwork = true;
-            timeoutStartSec = "5min";
-            # This ensures each container uses seperate uids
-            privateUsers = "pick";
-            extraFlags = lib.mkMerge [
-              [
-                "--network-zone=container"
-                "--resolv-conf=bind-stub"
-              ]
-              # This maps the owner of the directory inside the container to the owner of the directory outside the container
-              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:owneridmap") value.volumes)
-            ];
-            config = lib.mkMerge
-              [
-                ({ ... }: {
-                  config = {
-                    boot.initrd.systemd.tmpfiles.settings."10-container-volumes" =
-                      (lib.attrsets.mapAttrs (n: v: { d = { mode = v.mode; owner = v.owner; group = v.group; age = "-"; }; }) value.volumes);
-                    networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
-                  };
-                })
-                value.config
-              ];
-          })
-          config.nix-tun.utils.containers;
-    };
+      nix-tun.storage.persist.subvolumes."containers/${container-name}" = {
+        # This means that only root can traverse container volumes
+        mode = "0700";
+        directories =
+          lib.attrsets.mapAttrs
+            (_: value: {
+              # Owner, group and mode are managed from inside the container
+              mode = "-";
+              owner = "-";
+              group = "-";
+            })
+            container.volumes;
+      };
+
+      containers."${container-name}" = {
+        ephemeral = true;
+        autoStart = true;
+        privateNetwork = true;
+        timeoutStartSec = "5min";
+        # This ensures each container uses seperate uids
+        privateUsers = "pick";
+        extraFlags = lib.mkMerge [
+          [
+            "--network-zone=container"
+            "--resolv-conf=bind-stub"
+          ]
+          # This maps the ids inside the container to ids on the host
+          (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${container-name}/${n}:${n}:idmap") container.volumes)
+          (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets)
+        ];
+        config = lib.mkMerge
+          [
+            ({ ... }: {
+              config = {
+                # Set the correct owner, group and mode for the volumes 
+                systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") container.volumes);
+                networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) container.domains);
+              };
+            })
+            container.config
+          ];
+      };
+    })
+    config.nix-tun.utils.containers));
 }

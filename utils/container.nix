@@ -113,96 +113,99 @@
     };
   };
 
-  config = lib.mkDefinition (lib.mkMerge ([
-    {
-      assertions = [
+  config = lib.mkDefinition {
+    value = lib.mkMerge
+      ([
         {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
-          message = ''
-            Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
-            As that module is used to the store the container data.
-          '';
+          assertions = [
+            {
+              assertion = (config.nix-tun.utils.containers != { }) -> (config.nix-tun.storage.persist.enable);
+              message = ''
+                Nix-Tun containers require `nix-tun.storage.persist.enable` to be enabled.
+                As that module is used to the store the container data.
+              '';
+            }
+            {
+              assertion = (config.nix-tun.utils.containers != { }) -> (config.systemd.network.enable);
+              message = ''
+                Nix-Tun containers require `systemd.network.enable` to be enabled.
+                As networkd is used to setup container networking.
+              '';
+            }
+            {
+              assertion = (config.nix-tun.utils.containers != { }) -> (config.services.resolved.enable);
+              message = ''
+                Nix-Tun containers require `services.resolved.enable` to be enabled.
+                As resolved is used to resolve container hostnames. With the help of LLMNR.
+              '';
+            }
+          ];
+
+          networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
+          networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
+
         }
-        {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.systemd.network.enable);
-          message = ''
-            Nix-Tun containers require `systemd.network.enable` to be enabled.
-            As networkd is used to setup container networking.
-          '';
-        }
-        {
-          assertion = (config.nix-tun.utils.containers != { }) -> (config.services.resolved.enable);
-          message = ''
-            Nix-Tun containers require `services.resolved.enable` to be enabled.
-            As resolved is used to resolve container hostnames. With the help of LLMNR.
-          '';
-        }
-      ];
+      ] ++ (lib.attrsets.mapAttrsToList
+        (container-name: container: {
+          sops.secrets = (lib.lists.map (secret-name: { "${container-name}-${secret-name}" = { mode = "0500"; }; }) container.secrets);
 
-      networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
-      networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
-
-    }
-  ] ++ (lib.attrsets.mapAttrsToList
-    (container-name: container: {
-      sops.secrets = (lib.lists.map (secret-name: { "${container-name}-${secret-name}" = { mode = "0500"; }; }) container.secrets);
-
-      nix-tun.services.traefik.services = lib.attrsets.mapAttrs'
-        (domain-name: domain-value: {
-          name = "${container-name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
-          value = {
-            router = {
-              rule = "Host(`${domain-value.domain}`)";
-              entryPoints = domain-value.entryPoints;
-            };
-            servers = [ "http://${container-name}:${builtins.toString domain-value.port}" ];
-          };
-        })
-        container.domains;
-
-      nix-tun.storage.persist.subvolumes."containers/${container-name}" = {
-        # This means that only root can traverse container volumes
-        mode = "0700";
-        directories =
-          lib.attrsets.mapAttrs
-            (_: value: {
-              # Owner, group and mode are managed from inside the container
-              mode = "-";
-              owner = "-";
-              group = "-";
-            })
-            container.volumes;
-      };
-
-      containers."${container-name}" = {
-        ephemeral = true;
-        autoStart = true;
-        privateNetwork = true;
-        timeoutStartSec = "5min";
-        # This ensures each container uses seperate uids
-        privateUsers = "pick";
-        extraFlags =
-          [
-            "--network-zone=container"
-            "--resolv-conf=bind-stub"
-          ]
-          ++
-          # This maps the ids inside the container to ids on the host
-          (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${container-name}/${n}:${n}:idmap") container.volumes)
-          ++
-          (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets);
-        config = lib.modules.mergeModules
-          [
-            ({ ... }: {
-              config = {
-                # Set the correct owner, group and mode for the volumes 
-                systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") container.volumes);
-                networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) container.domains);
+          nix-tun.services.traefik.services = lib.attrsets.mapAttrs'
+            (domain-name: domain-value: {
+              name = "${container-name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+              value = {
+                router = {
+                  rule = "Host(`${domain-value.domain}`)";
+                  entryPoints = domain-value.entryPoints;
+                };
+                servers = [ "http://${container-name}:${builtins.toString domain-value.port}" ];
               };
             })
-            container.config
-          ];
-      };
-    })
-    config.nix-tun.utils.containers)));
+            container.domains;
+
+          nix-tun.storage.persist.subvolumes."containers/${container-name}" = {
+            # This means that only root can traverse container volumes
+            mode = "0700";
+            directories =
+              lib.attrsets.mapAttrs
+                (_: value: {
+                  # Owner, group and mode are managed from inside the container
+                  mode = "-";
+                  owner = "-";
+                  group = "-";
+                })
+                container.volumes;
+          };
+
+          containers."${container-name}" = {
+            ephemeral = true;
+            autoStart = true;
+            privateNetwork = true;
+            timeoutStartSec = "5min";
+            # This ensures each container uses seperate uids
+            privateUsers = "pick";
+            extraFlags =
+              [
+                "--network-zone=container"
+                "--resolv-conf=bind-stub"
+              ]
+              ++
+              # This maps the ids inside the container to ids on the host
+              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${container-name}/${n}:${n}:idmap") container.volumes)
+              ++
+              (lib.lists.map (secret: "--bind-ro=${config.sops.secrets."${container-name}-${secret}".path}:${config.sops.secrets."${container-name}-${secret}".path}:idmap") container.secrets);
+            config = lib.modules.mergeModules
+              [
+                ({ ... }: {
+                  config = {
+                    # Set the correct owner, group and mode for the volumes 
+                    systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") container.volumes);
+                    networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) container.domains);
+                  };
+                })
+                container.config
+              ];
+          };
+        })
+        config.nix-tun.utils.containers));
+  };
 }

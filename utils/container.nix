@@ -94,6 +94,16 @@
                   };
                 }));
               };
+              secrets = lib.mkOption {
+                default = [ ];
+                description = ''
+                  Secrets to which the container needs access to. This will autmatically setup the secrets on the host and bind-mount them as read-only inside the container.
+                  The mode is always set to 0500, and owned by root (inside and outside the container).
+                  A secret with the name "x" will create a secret with the name "container-x" on the host.
+                  And mounted inside the container as "/secret/x".
+                '';
+                type = lib.types.listOf lib.types.str;
+              };
             };
           }));
       default = { };
@@ -131,6 +141,10 @@
 
       networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
       networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
+
+      sops.secrets = (lib.mkMerge
+        (lib.attrsets.mapAttrsToList
+          (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets))));
 
       nix-tun.services.traefik.services =
         (lib.mkMerge

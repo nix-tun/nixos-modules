@@ -44,7 +44,8 @@
           port = 443;
         };
         "prometheus" = {
-          port = 9100;
+          address = "127.0.0.1:9100";
+          port = "";
         };
       };
       description = ''
@@ -150,25 +151,12 @@
     networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port) config.nix-tun.services.traefik.entrypoints;
     users.users.traefik.extraGroups = lib.mkIf config.nix-tun.services.traefik.enable_docker [ "docker" ];
     systemd.services.traefik.environment.LD_LIBRARY_PATH = config.system.nssModules.path;
-    nix-tun.utils.prometheus-exporter = lib.mkIf config.nix-tun.services.traefik.enable_prometheus { "traefik" = [ "traefik.${config.networking.fqdnOrHostName}:9100" ]; };
-
-    sops.secrets."prometheus-traefik-pw" = lib.mkIf config.nix-tun.services.traefik.enable_prometheus { };
-    sops.templates."prometheus-traefik-auth" = lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
-      owner = "traefik";
-      content = ''
-        traefik:${config.sops.placeholder.prometheus-node-exporter-pw}
-      '';
-    };
-
     systemd.services.traefik.serviceConfig.LimitNPROC = lib.mkForce 8192;
 
     services.traefik = {
       enable = true;
       dynamicConfigOptions = {
         http = {
-          middlewares."prometheus-traefik-auth" = lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
-            basicAuth.usersFile = config.sops.templates."prometheus-traefik-auth".path;
-          };
           routers = lib.mkMerge [
             (lib.attrsets.mapAttrs
               (
@@ -192,7 +180,6 @@
                 rule = "Host(`traefik.${config.networking.fqdnOrHostName}`)";
                 entryPoints = "prometheus";
                 service = "prometheus@internal";
-                middlewares = [ "prometheus-traefik-auth" ];
               };
             })
           ];
@@ -252,6 +239,7 @@
               addEntryPointsLabels = true;
               addRoutersLabels = true;
               addServicesLabels = true;
+              addInternals = true;
               manualRouting = true;
             };
           };

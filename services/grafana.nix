@@ -35,38 +35,52 @@
   };
 
   config = lib.mkIf config.nix-tun.services.grafana.enable (
-    let
-      prometheus-scraper = (lib.attrsets.foldAttrs (n: a: n ++ a) [ ]
-        (lib.attrsets.mapAttrsToList
-          (host: config: config.config.nix-tun.utils.prometheus-exporter)
-          config.nix-tun.services.grafana.prometheus.nixosConfigs));
-    in
     {
-      containers.grafana.bindMounts = lib.attrsets.mapAttrs'
-        (job-name: _:
-          {
-            name = "${config.sops.secrets."prometheus-${job-name}-pass".path}:idmap";
-            value.hostPath = config.sops.secrets."prometheus-${job-name}-pass".path;
-          }
-        )
-        prometheus-scraper;
-
       nix-tun.services.traefik.services."grafana-grafana" = {
         router.tls.enable = false;
       };
 
       nix-tun.services.traefik.services."grafana-loki" = {
+        middlewares = [
+          "loki-basic-auth"
+        ];
         router.tls.enable = false;
       };
 
-      sops.secrets = lib.attrsets.mapAttrs'
-        (job-name: _:
-          {
-            name = "prometheus-${job-name}-pass";
-            value.uid = config.containers.grafana.config.users.users.prometheus.uid;
-          }
-        )
-        prometheus-scraper;
+
+      nix-tun.services.traefik.services."grafana-prometheus" = {
+        middlewares = [
+          "prometheus-basic-auth"
+        ];
+        router.tls.enable = false;
+      };
+
+
+      sops.secrets."prometheus-password" = { };
+      sops.templates."prometheus-basic-auth" = {
+        owner = "traefik";
+        content = ''
+          prometheus:${config.sops.placeholder.prometheus-basic-auth}
+        '';
+      };
+
+      sops.secrets."loki-password" = { };
+      sops.templates."loki-basic-auth" = {
+        owner = "traefik";
+        content = ''
+          loki:${config.sops.placeholder.prometheus-basic-auth}
+        '';
+      };
+
+      services.traefik.dynamicConfigOptions.http = {
+        middlewares."loki-basic-auth".basicAuth = {
+          usersFile = config.sops.templates."loki-basic-auth".path;
+        };
+
+        middlewares."prometheus-basic-auth".basicAuth = {
+          usersFile = config.sops.templates."loki-basic-auth".path;
+        };
+      };
 
       nix-tun.utils.containers.grafana = {
         volumes = {
@@ -84,6 +98,10 @@
           grafana = {
             domain = config.nix-tun.services.grafana.domain;
             port = 3000;
+          };
+          prometheus = {
+            domain = config.nix-tun.services.grafana.prometheus.domain;
+            port = 9000;
           };
           loki = {
             domain = config.nix-tun.services.grafana.loki.domain;
@@ -159,21 +177,9 @@
           services.prometheus = {
             enable = true;
             port = 9000;
-            scrapeConfigs = lib.attrsets.mapAttrsToList
-              (job-name: targets:
-                {
-                  job_name = job-name;
-                  basic_auth = {
-                    username = job-name;
-                    password_file = config.sops.secrets."prometheus-${job-name}-pass".path;
-                  };
-                  scheme = "http";
-                  static_configs = [{
-                    targets = targets;
-                  }];
-                }
-              )
-              prometheus-scraper;
+            extraFlags = [
+              "--web.enable-remote-write-receiver"
+            ];
           };
 
           services.grafana = {

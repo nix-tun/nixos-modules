@@ -33,23 +33,11 @@
       opts = config.nix-tun.services.containers.nextcloud;
     in
     lib.mkIf opts.enable {
-      sops.secrets.nextcloud_pass = {
-        mode = "444";
-      };
-      sops.secrets.nextcloud_dbpass = {
-        mode = "444";
-      };
-
-      containers.nextcloud = {
-        bindMounts = {
-          "secret" = {
-            hostPath = config.sops.secrets.nextcloud_pass.path;
-            mountPoint = "${config.sops.secrets.nextcloud_pass.path}:idmap";
-          };
-        };
-      };
-
       nix-tun.utils.containers.nextcloud = {
+        secrets = [
+          "admin-pass"
+          "dbpass"
+        ];
         domains.nextcloud = {
           domain = "${opts.hostname}";
           port = 80;
@@ -81,7 +69,7 @@
             settings.trusted_proxies = [ "192.168.0.0/16" "172.16.0.0/12" "10.0.0.0/8" ] ++ opts.extraTrustedProxies;
             settings.trusted_domains = [ "nextcloud" opts.hostname ];
             config = {
-              adminpassFile = "${config.sops.secrets.nextcloud_pass.path}";
+              adminpassFile = "/secret/admin-pass";
               dbtype = "mysql";
             };
 

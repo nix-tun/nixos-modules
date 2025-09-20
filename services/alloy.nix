@@ -23,7 +23,7 @@
     environment.etc."alloy/loki-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
       loki.write "default" {
         endpoint {
-          url = "${config.nix-tun.alloy.loki-host}/loki/api/v1/push"
+          url = "https://${config.nix-tun.alloy.loki-host}/loki/api/v1/push"
  
           basic_auth {
             password_file = "${config.sops.secrets.loki-host-pw.path}"
@@ -73,7 +73,7 @@
     environment.etc."alloy/prometheus-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null) ''
       prometheus.remote_write "default" {
         endpoint {
-          url = "${config.nix-tun.alloy.prometheus-host}/api/v1/write"
+          url = "https://${config.nix-tun.alloy.prometheus-host}/api/v1/write"
 
           basic_auth {
             password_file = "${config.sops.secrets.prometheus-host-pw.path}"

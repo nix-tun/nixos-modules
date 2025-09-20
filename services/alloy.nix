@@ -24,6 +24,8 @@
       loki.write "default" {
         endpoint {
           url = "https://${config.nix-tun.alloy.loki-host}/loki/api/v1/push"
+
+          tenant_id = 1
  
           basic_auth {
             password_file = "${config.sops.secrets.loki-host-pw.path}"

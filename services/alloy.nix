@@ -97,6 +97,25 @@
         targets    = discovery.relabel.integrations_node_exporter.output
         forward_to = [prometheus.remote_write.default.receiver]
       }
+
+      prometheus.exporter.unix "integrations_node_exporter" {
+        disable_collectors = ["ipvs", "infiniband", "xfs", "zfs"]
+        enable_collectors = ["meminfo"]
+
+        filesystem {
+          fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+          mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)"
+          mount_timeout        = "5s"
+        }
+
+        netclass {
+          ignored_devices = "^(veth.*|cali.*|[a-f0-9]{15})$"
+        }
+
+        netdev {
+          device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
+        }
+      }
     '';
   };
 

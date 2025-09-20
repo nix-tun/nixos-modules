@@ -10,13 +10,14 @@
   };
 
   config = lib.mkIf config.nix-tun.alloy.enable {
-    sops.secrets.loki-host-pw = { };
-    sops.secrets.prometheus-host-pw = { };
+    sops.secrets.loki-host-pw = { mode = "777"; };
+    sops.secrets.prometheus-host-pw = { mode = "777"; };
 
     systemd.services.alloy.serviceConfig.ReadPaths = [
       config.sops.secrets.loki-host-pw.path
       config.sops.secrets.prometheus-host-pw.path
     ];
+
 
     services.alloy.enable = true;
     environment.etc."alloy/loki-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''

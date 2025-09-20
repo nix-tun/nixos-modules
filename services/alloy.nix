@@ -9,16 +9,12 @@
     };
   };
 
-  config = {
-    sops.secrets.loki-host-pw = {
-      owner = "alloy";
-    };
-    sops.secrets.prometheus-host-pw = {
-      owner = "alloy";
-    };
+  config = lib.mkIf config.nix-tun.alloy.enable {
+    sops.secrets.loki-host-pw = { };
+    sops.secrets.prometheus-host-pw = { };
 
     services.alloy.enable = true;
-    environment.etc."alloy/loki-writer.alloy" = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
+    environment.etc."alloy/loki-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
       loki.write "default" {
         endpoint {
           url = "${config.nix-tun.alloy.loki-host}/loki/api/v1/push"
@@ -31,7 +27,7 @@
       }
     '';
 
-    environment.etc."alloy/loki-journal.alloy" = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
+    environment.etc."alloy/loki-journal.alloy".text = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
       discovery.relabel "logs_integrations_integrations_node_exporter_journal_scrape" {
         targets = []
 
@@ -68,7 +64,7 @@
        }
     '';
 
-    environment.etc."alloy/prometheus-writer.alloy" = lib.mkIf (config.nix-tun.alloy.prometheus-host != null) ''
+    environment.etc."alloy/prometheus-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null) ''
       prometheus.remote_write "default" {
         endpoint {
           url = "${config.nix-tun.alloy.prometheus-host}/api/v1/write"
@@ -81,7 +77,7 @@
       }
     '';
 
-    environment.etc."alloy/prometheus-node-exporter.alloy" = lib.mkIf (config.nix-tun.alloy.prometheus-host != null) ''
+    environment.etc."alloy/prometheus-node-exporter.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null) ''
       discovery.relabel "integrations_node_exporter" {
         targets = prometheus.exporter.unix.integrations_node_exporter.targets
 

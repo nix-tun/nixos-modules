@@ -41,7 +41,7 @@
       };
 
       nix-tun.services.traefik.services."grafana-loki" = {
-        middlewares = [
+        router.middlewares = [
           "loki-basic-auth"
         ];
         router.tls.enable = false;
@@ -49,7 +49,7 @@
 
 
       nix-tun.services.traefik.services."grafana-prometheus" = {
-        middlewares = [
+        router.middlewares = [
           "prometheus-basic-auth"
         ];
         router.tls.enable = false;
@@ -60,7 +60,7 @@
       sops.templates."prometheus-basic-auth" = {
         owner = "traefik";
         content = ''
-          prometheus:${config.sops.placeholder.prometheus-basic-auth}
+          prometheus:${config.sops.placeholder.prometheus-password}
         '';
       };
 
@@ -68,7 +68,7 @@
       sops.templates."loki-basic-auth" = {
         owner = "traefik";
         content = ''
-          loki:${config.sops.placeholder.prometheus-basic-auth}
+          loki:${config.sops.placeholder.loki-password}
         '';
       };
 
@@ -78,7 +78,7 @@
         };
 
         middlewares."prometheus-basic-auth".basicAuth = {
-          usersFile = config.sops.templates."loki-basic-auth".path;
+          usersFile = config.sops.templates."prometheus-basic-auth".path;
         };
       };
 

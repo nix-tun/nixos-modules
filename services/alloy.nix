@@ -13,6 +13,11 @@
     sops.secrets.loki-host-pw = { };
     sops.secrets.prometheus-host-pw = { };
 
+    systemd.services.alloy.serviceConfig.ReadPaths = [
+      config.sops.secrets.loki-host-pw.path
+      config.sops.secrets.prometheus-host-pw.path
+    ];
+
     services.alloy.enable = true;
     environment.etc."alloy/loki-writer.alloy".text = lib.mkIf (config.nix-tun.alloy.loki-host != null) ''
       loki.write "default" {

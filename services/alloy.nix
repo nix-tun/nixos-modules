@@ -13,10 +13,13 @@
     sops.secrets.loki-host-pw = { mode = "777"; };
     sops.secrets.prometheus-host-pw = { mode = "777"; };
 
-    systemd.services.alloy.serviceConfig.ReadPaths = [
-      config.sops.secrets.loki-host-pw.path
-      config.sops.secrets.prometheus-host-pw.path
-    ];
+    systemd.services.alloy.serviceConfig = {
+      ReadPaths = [
+        config.sops.secrets.loki-host-pw.path
+        config.sops.secrets.prometheus-host-pw.path
+      ];
+      RestrictAddressFamilies = [ "AF_UNIX" "AF_NETLINK" ];
+    };
 
 
     services.alloy.enable = true;

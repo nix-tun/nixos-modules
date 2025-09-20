@@ -132,6 +132,9 @@
                   }
                 ];
               };
+              compactor = {
+                working_directory = "/var/lib/loki/compactor";
+              };
               storage_config = {
                 tsdb_shipper = {
                   active_index_directory = "/var/lib/loki/tsdb-shipper-active";

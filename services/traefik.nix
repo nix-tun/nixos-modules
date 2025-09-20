@@ -45,7 +45,8 @@
         };
         "prometheus" = {
           address = "127.0.0.1:9100";
-          port = "";
+          # Yes this is bad, currently the code auto opens the firewall for the port
+          port = 80;
         };
       };
       description = ''

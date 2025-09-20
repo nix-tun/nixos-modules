@@ -21,7 +21,7 @@
  
           basic_auth {
             password_file = "${config.sops.secrets.loki-host-pw.path}"
-            user = "prometheus"
+            username = "prometheus"
           }
         }
       }
@@ -71,7 +71,7 @@
 
           basic_auth {
             password_file = "${config.sops.secrets.prometheus-host-pw.path}"
-            user = "prometheus"
+            username = "prometheus"
           }
         }
       }

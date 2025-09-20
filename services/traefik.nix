@@ -240,7 +240,6 @@
               addEntryPointsLabels = true;
               addRoutersLabels = true;
               addServicesLabels = true;
-              addInternals = true;
               manualRouting = true;
             };
           };

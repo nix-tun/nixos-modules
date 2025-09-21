@@ -62,7 +62,9 @@
                 '';
               };
               volumes = lib.mkOption {
-                default = { };
+                default = {
+                  "/var/log/journal" = { owner = "root"; group = "wheel"; mode = "0755"; };
+                };
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.
@@ -198,7 +200,7 @@
             extraFlags = lib.mkMerge [
               [
                 "--tmpfs=/var"
-                "--link-journal=host"
+                "--link-journal=guest"
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
               ]

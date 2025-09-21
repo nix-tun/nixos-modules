@@ -190,7 +190,6 @@
       containers =
         lib.attrsets.mapAttrs
           (name: value: {
-            ephemeral = true;
             autoStart = true;
             privateNetwork = true;
             timeoutStartSec = "5min";
@@ -198,6 +197,8 @@
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
               [
+                "--volatile=state"
+                "--link-journal=host"
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
               ]

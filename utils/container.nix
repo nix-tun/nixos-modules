@@ -194,14 +194,15 @@
           (name: value: {
             autoStart = true;
             privateNetwork = true;
+            ephemeral = true;
             timeoutStartSec = "5min";
             # This ensures each container uses seperate uids
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
               [
-                "--link-journal=host"
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
+                "--bind=/var/log/journal:/var/log/journal:idmap"
               ]
               # This maps the owner of the directory inside the container to the owner of the directory outside the container
               (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)

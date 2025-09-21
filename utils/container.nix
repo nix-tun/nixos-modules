@@ -197,7 +197,8 @@
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
               [
-                "--volatile"
+                "--read-only"
+                "--tmpfs=/var"
                 "--link-journal=host"
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"

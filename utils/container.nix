@@ -62,9 +62,6 @@
                 '';
               };
               volumes = lib.mkOption {
-                default = {
-                  "/var/log/journal" = { owner = "root"; group = "wheel"; mode = "0755"; };
-                };
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.
@@ -205,7 +202,7 @@
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
                 "--uuid=${builtins.hashString "md5" name}"
-                "--bind=/var/log/containers/${name}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
+                "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
               ]
               # This maps the owner of the directory inside the container to the owner of the directory outside the container
               (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)

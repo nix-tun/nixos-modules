@@ -178,14 +178,16 @@
         lib.attrsets.mapAttrs'
           (name: value: {
             name = "containers/${name}";
-            value.directories =
-              lib.attrsets.mapAttrs
+            value.directories = lib.mkMerge [
+              (lib.attrsets.mapAttrs
                 (_: value: {
                   mode = "-";
                   owner = "-";
                   group = "-";
                 })
-                value.volumes;
+                value.volumes)
+              { "log" = { mode = "-"; owner = "-"; group = "-"; }; }
+            ];
           })
           config.nix-tun.utils.containers;
 
@@ -202,7 +204,8 @@
               [
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
-                "--bind=/var/log/journal:/var/log/journal:idmap"
+                "--uuid=${builtins.hashString "md5" name}"
+                "--bind=/var/log/containers/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
               ]
               # This maps the owner of the directory inside the container to the owner of the directory outside the container
               (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)

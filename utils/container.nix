@@ -16,6 +16,7 @@
                     staticModules = [
                       ({ ... }: {
                         config = {
+                          boot.isContainer = true;
                           system.stateVersion = lib.mkDefault config.system.stateVersion;
                           networking.useHostResolvConf = lib.mkForce false;
                           networking.firewall.allowedUDPPorts = [ 5355 ];
@@ -62,6 +63,7 @@
                 '';
               };
               volumes = lib.mkOption {
+                default = {};
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.

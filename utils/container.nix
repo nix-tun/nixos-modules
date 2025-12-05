@@ -62,25 +62,8 @@
                   This will expose the service at the internal `port`.
                 '';
               };
-              exposedPorts = lib.mkOption {
-                type = lib.types.listOf (lib.types.submodule ({ ... }: {
-                  options = {
-                    port = lib.mkOption {
-                      type = lib.types.port;
-                    };
-                    hostPort = lib.mkOption {
-                      type = lib.types.port;
-                    };
-                    protocol = lib.mkOption {
-                      type = lib.types.enum [ "udp" "tcp" ];
-                      default = "tcp";
-                    };
-                  };
-                }));
-                default = [ ];
-              };
               volumes = lib.mkOption {
-                default = { };
+                default = {};
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.
@@ -131,7 +114,7 @@
     };
   };
 
-  config = lib.mkIf (config.nix-tun.utils.containers != { }) (lib.mkMerge [
+  config = lib.mkIf (config.nix-tun.utils.containers != { })
     {
       assertions = [
         {
@@ -166,72 +149,79 @@
 
       networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
       networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
-    }
-  ] ++ (lib.attrsets.mapAttrsToList
-    (name: value: {
-      sops.secrets = lib.mkMerge (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets);
 
-      nix-tun.services.traefik.services = lib.attrsets.mapAttrs'
-        (domain-name: domain-value: {
-          name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
-          value = {
-            router = {
-              rule = "Host(`${domain-value.domain}`)";
-              entryPoints = domain-value.entryPoints;
-            };
-            servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
-          };
-        })
-        value.domains;
+      sops.secrets = (lib.mkMerge
+        (lib.lists.flatten
+          (lib.attrsets.mapAttrsToList
+            (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets))
+            config.nix-tun.utils.containers)));
 
-      nix-tun.storage.persist.subvolumes."containers/${name}".directories = lib.mkMerge [
-        (lib.attrsets.mapAttrs
-          (_: value: {
-            mode = "-";
-            owner = "-";
-            group = "-";
+      nix-tun.services.traefik.services =
+        (lib.mkMerge
+          (lib.attrsets.mapAttrsToList
+            (name: value: (lib.attrsets.mapAttrs'
+              (domain-name: domain-value: {
+                name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+                value = {
+                  router = {
+                    rule = "Host(`${domain-value.domain}`)";
+                    entryPoints = domain-value.entryPoints;
+                  };
+                  servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
+                };
+              })
+              value.domains))
+            config.nix-tun.utils.containers));
+
+      nix-tun.storage.persist.subvolumes =
+        lib.attrsets.mapAttrs'
+          (name: value: {
+            name = "containers/${name}";
+            value.directories = lib.mkMerge [
+              (lib.attrsets.mapAttrs
+                (_: value: {
+                  mode = "-";
+                  owner = "-";
+                  group = "-";
+                })
+                value.volumes)
+              { "log" = { mode = "-"; owner = "-"; group = "-"; }; }
+            ];
           })
-          value.volumes)
-        { "log" = { mode = "-"; owner = "-"; group = "-"; }; }
-      ];
+          config.nix-tun.utils.containers;
 
-      containers."${name}" = {
-        autoStart = true;
-        privateNetwork = true;
-        ephemeral = true;
-        timeoutStartSec = "5min";
-        # This ensures each container uses seperate uids
-        privateUsers = "pick";
-        forwardPorts = lib.lists.map
-          (item: {
-            hostPort = item.hostPort;
-            containerPort = item.port;
-            protocol = item.protocol;
+      containers =
+        lib.attrsets.mapAttrs
+          (name: value: {
+            autoStart = true;
+            privateNetwork = true;
+            ephemeral = true;
+            timeoutStartSec = "5min";
+            # This ensures each container uses seperate uids
+            privateUsers = "pick";
+            extraFlags = lib.mkMerge [
+              [
+                "--network-zone=container"
+                "--resolv-conf=bind-stub"
+                "--uuid=${builtins.hashString "md5" name}"
+                "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
+              ]
+              # This maps the owner of the directory inside the container to the owner of the directory outside the container
+              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)
+              (lib.lists.map (secret: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets)
+            ];
+            config = lib.mkMerge
+              [
+                ({ ... }: {
+                  config = {
+                    # Set the correct owner, group and mode for the volumes 
+                    systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") value.volumes);
+                    networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
+                  };
+                })
+                value.config
+              ];
           })
-          value.exposedPorts;
-        extraFlags = lib.mkMerge [
-          [
-            "--network-zone=container"
-            "--resolv-conf=bind-stub"
-            "--uuid=${builtins.hashString "md5" name}"
-            "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
-          ]
-          # This maps the owner of the directory inside the container to the owner of the directory outside the container
-          (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.path}/containers/${name}/${n}:${n}:idmap") value.volumes)
-          (lib.lists.map (secret: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets)
-        ];
-        config = lib.mkMerge
-          [
-            ({ ... }: {
-              config = {
-                # Set the correct owner, group and mode for the volumes 
-                systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") value.volumes);
-                networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
-              };
-            })
-            value.config
-          ];
-      };
-    })
-    config.nix-tun.utils.containers));
+          config.nix-tun.utils.containers;
+    };
 }

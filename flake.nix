@@ -33,6 +33,7 @@
           ./services/containers/onlyoffice.nix
           ./services/grafana.nix
           ./services/alloy.nix
+          ./services/coturn.nix
           ./utils/container.nix
           #./services/matrix.nix
 

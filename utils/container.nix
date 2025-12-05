@@ -36,6 +36,21 @@
                     A Nixos Conifugration for the Container.
                   '';
                 };
+              exposePorts = lib.mkOption {
+                type = lib.types.listOf (lib.types.submodule ({ ... }: {
+                  options = {
+                    port = lib.mkOption {
+                      type = lib.types.port;
+                    };
+                    hostPort = lib.mkOption {
+                      type = lib.types.port;
+                    };
+                    protocol = lib.mkOption {
+                      type = lib.types.enum [ "tcp" "udp" ];
+                    };
+                  };
+                }));
+              };
               domains = lib.mkOption {
                 type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
                   options = {
@@ -63,7 +78,7 @@
                 '';
               };
               volumes = lib.mkOption {
-                default = {};
+                default = { };
                 description = ''
                   Directories to autmatically create in persistent storage, and bind mount inside the container.
                   Directories will be created in /persist/containers/<container-name>/<directory>.
@@ -197,6 +212,13 @@
             privateNetwork = true;
             ephemeral = true;
             timeoutStartSec = "5min";
+            forwardPorts = lib.map
+              (item: {
+                containerPort = item.port;
+                hostPort = item.hostPort;
+                protocol = item.protocol;
+              })
+              value.exposePorts;
             # This ensures each container uses seperate uids
             privateUsers = "pick";
             extraFlags = lib.mkMerge [

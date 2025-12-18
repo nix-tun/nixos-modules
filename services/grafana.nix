@@ -20,7 +20,7 @@
       };
       provision = lib.mkOption {
         type = (lib.types.attrsOf (lib.types.submodule {
-          freeformType = pkgs.formats.yaml { };
+          freeformType = (pkgs.formats.yaml { }).type;
           apiVersion = lib.mkOption {
             type = lib.types.int;
             description = "The API version of the provision file, for now 1";

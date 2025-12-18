@@ -28,18 +28,17 @@
     };
     entrypoints = lib.mkOption {
       type = lib.types.submodule {
-        freeformType = pkgs.formats.toml {
-          options = {
-            port = lib.mkOption {
-              type = lib.types.port;
-            };
-            protocol = lib.mkOption {
-              type = lib.types.enum [ "tcp" "udp" ];
-            };
-            bind-ip = lib.mkOption {
-              type = lib.types.str;
-              default = "0.0.0.0";
-            };
+        freeformType = pkgs.formats.toml;
+        options = {
+          port = lib.mkOption {
+            type = lib.types.port;
+          };
+          protocol = lib.mkOption {
+            type = lib.types.enum [ "tcp" "udp" ];
+          };
+          bind-ip = lib.mkOption {
+            type = lib.types.str;
+            default = "0.0.0.0";
           };
         };
       };

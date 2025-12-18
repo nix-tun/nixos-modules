@@ -194,9 +194,9 @@
             {
               entrypoints = (lib.listToAttrs (lib.lists.map
                 (v: {
-                  name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
+                  name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
                   value = {
-                    port = "${v.hostPort}/${v.protocol}";
+                    port = "${builtins.toString v.hostPort}/${v.protocol}";
                   };
                 })
                 container.exposedPorts));
@@ -204,10 +204,10 @@
               services = (lib.mkMerge [
                 (lib.listToAttrs (lib.lists.map
                   (v: {
-                    name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
+                    name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
                     value = {
-                      router.entrypoints = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
-                      servers = [ "${name}:${v.port}" ];
+                      router.entrypoints = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
+                      servers = [ "${name}:${builtins.toString v.port}" ];
                     };
                   })
                   container.exposedPorts))

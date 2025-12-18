@@ -165,7 +165,7 @@
 
     nix-tun.services.traefik.entrypoints = {
       web = {
-        port = "80";
+        port = 80;
         protocol = "tcp";
         http = {
           redirections = {
@@ -177,12 +177,12 @@
         };
       };
       websecure = {
-        port = "443";
+        port = 443;
         protocol = "tcp";
       };
       prometheus = lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
         bind-ip = "127.0.0.1";
-        port = "9100";
+        port = 9100;
         protocol = "tcp";
       };
     };

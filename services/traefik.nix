@@ -27,7 +27,7 @@
       '';
     };
     entrypoints = lib.mkOption {
-      type = lib.types.submodule {
+      type = lib.types.attrsOf (lib.types.submodule {
         freeformType = (pkgs.formats.toml { }).type;
         options = {
           port = lib.mkOption {
@@ -35,13 +35,14 @@
           };
           protocol = lib.mkOption {
             type = lib.types.enum [ "tcp" "udp" ];
+            default = "tcp";
           };
           bind-ip = lib.mkOption {
             type = lib.types.str;
             default = "0.0.0.0";
           };
         };
-      };
+      });
       default = { };
       description = ''
         The entryPoints config of the traefik reverse proxy. See https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/ for reference.
@@ -187,7 +188,7 @@
     };
 
     networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
-      (lib.attrsets.filterAttrs (name: value: value.protocol == "tcp") config.nix-tun.services.traefik.entrypoints);
+      (lib.attrsets.filterAttrs (name: value: value.protocol == "tcp" || value.protocol == "http") config.nix-tun.services.traefik.entrypoints);
 
     networking.firewall.allowedUDPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
       (lib.attrsets.filterAttrs (name: value: value.protocol == "udp") config.nix-tun.services.traefik.entrypoints);

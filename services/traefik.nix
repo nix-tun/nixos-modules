@@ -67,6 +67,7 @@
           options = {
             protocol = lib.mkOption {
               type = lib.types.enum [ "tcp" "udp" "http" ];
+	      default = "http";
             };
             router = {
               rule = lib.mkOption {

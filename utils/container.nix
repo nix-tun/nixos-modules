@@ -197,7 +197,8 @@
                 (v: {
                   name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
                   value = {
-                    port = "${builtins.toString v.hostPort}/${v.protocol}";
+                    port = v.hostPort;
+                    protocol = v.protocol;
                   };
                 })
                 container.exposedPorts));

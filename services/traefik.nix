@@ -67,7 +67,7 @@
           options = {
             protocol = lib.mkOption {
               type = lib.types.enum [ "tcp" "udp" "http" ];
-	      default = "http";
+              default = "http";
             };
             router = {
               rule = lib.mkOption {
@@ -249,7 +249,9 @@
                 (n: v: v.protocol == "http")
                 config.nix-tun.services.traefik.services);
         };
-        tcp = {
+        tcp = lib.mkIf { } != (lib.attrsets.filterAttrs
+          (n: v: v.protocol == "tcp")
+          config.nix-tun.services.traefik.services) {
           routers = (lib.attrsets.mapAttrs
             (
               name: value:
@@ -279,7 +281,9 @@
               config.nix-tun.services.traefik.services);
 
         };
-        udp = {
+        udp = lib.mkIf { } != (lib.attrsets.filterAttrs
+          (n: v: v.protocol == "udp")
+          config.nix-tun.services.traefik.services) {
           routers = (lib.attrsets.mapAttrs
             (name: value: {
               service = name;

@@ -117,40 +117,40 @@
                 '';
               };
             };
-          };
-          servers = lib.mkOption {
-            type = lib.types.listOf (lib.types.str);
-            default = [ ];
-            description = ''
-              The hosts of the service
-            '';
-          };
-          healthcheck = {
-            enable = lib.mkEnableOption ''
-              Enables healthcheck of this service from traefik.
-              Traefik expects a status code of 2xx or 3xx at path.
-              If the healthcheck fails the service will not be reachable.
-            '';
-            path = lib.mkOption {
-              type = lib.types.str;
-              default = "/";
+            servers = lib.mkOption {
+              type = lib.types.listOf (lib.types.str);
+              default = [ ];
               description = ''
-                The path for the healthcheck.
+                The hosts of the service
               '';
             };
-            interval = lib.mkOption {
-              type = lib.types.str;
-              default = "10s";
-              description = ''
-                How often the service is HealthChecked.
+            healthcheck = {
+              enable = lib.mkEnableOption ''
+                Enables healthcheck of this service from traefik.
+                Traefik expects a status code of 2xx or 3xx at path.
+                If the healthcheck fails the service will not be reachable.
               '';
-            };
-            timeout = lib.mkOption {
-              type = lib.types.str;
-              default = "3s";
-              description = ''
-                How long traefik waits for an response, before it deems the server unreachable.
-              '';
+              path = lib.mkOption {
+                type = lib.types.str;
+                default = "/";
+                description = ''
+                  The path for the healthcheck.
+                '';
+              };
+              interval = lib.mkOption {
+                type = lib.types.str;
+                default = "10s";
+                description = ''
+                  How often the service is HealthChecked.
+                '';
+              };
+              timeout = lib.mkOption {
+                type = lib.types.str;
+                default = "3s";
+                description = ''
+                  How long traefik waits for an response, before it deems the server unreachable.
+                '';
+              };
             };
           };
         }));

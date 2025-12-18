@@ -12,6 +12,20 @@
       opts = config.nix-tun.services.coturn;
     in
     lib.mkIf opts.enable {
+      networking.firewall =
+        let
+          range = with config.services.coturn;
+            lib.singleton {
+              from = min-port;
+              to = max-port;
+            };
+        in
+        {
+          allowedUDPPortRanges = range;
+          allowedUDPPorts = [ 3478 5349 ];
+          allowedTCPPorts = [ 3478 5349 ];
+        };
+
       nix-tun.utils.containers."coturn" = {
         exposedPorts = lib.mkMerge [
           (lib.lists.map
@@ -90,19 +104,6 @@
               '';
             };
             # open the firewall
-            networking.firewall =
-              let
-                range = with config.services.coturn;
-                  lib.singleton {
-                    from = min-port;
-                    to = max-port;
-                  };
-              in
-              {
-                allowedUDPPortRanges = range;
-                allowedUDPPorts = [ 3478 5349 ];
-                allowedTCPPorts = [ 3478 5349 ];
-              };
             system.stateVersion = "23.11";
           };
       };

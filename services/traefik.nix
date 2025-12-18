@@ -27,80 +27,95 @@
       '';
     };
     entrypoints = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        web = {
-          port = 80;
-          http = {
-            redirections = {
-              entryPoint = {
-                to = "websecure";
-                scheme = "https";
-              };
+      type = lib.types.submodule {
+        freeformType = pkgs.formats.toml {
+          options = {
+            port = lib.mkOption {
+              type = lib.types.port;
+            };
+            protocol = lib.mkOption {
+              type = lib.types.enum [ "tcp" "udp" ];
+            };
+            bind-ip = lib.mkOption {
+              type = lib.types.str;
+              default = "0.0.0.0";
             };
           };
         };
-        websecure = {
-          port = 443;
-        };
-        "prometheus" = {
-          address = "127.0.0.1:9100";
-          # Yes this is bad, currently the code auto opens the firewall for the port
-          port = 80;
-        };
       };
+      default = { };
       description = ''
-        The entrypoints of the traefik reverse proxy default are 80 (web) and 443 (websecure)
+        The entryPoints config of the traefik reverse proxy. See https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/ for reference.
+        The address field of the traefik config is split into the three options port, protocol and bind-ip.
+        So instead of 
+        {
+          address = "0.0.0.0:443/tcp"
+        }
+        you would write
+        {
+          port = 443;
+          protocol = "tcp";
+          bind-ip = "0.0.0.0";
+        }
       '';
     };
     redirects =
       lib.mkOption { };
     services = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
-        options = {
-          router = {
-            rule = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-              description = ''
-                The routing rule for this service. The rules are defined here: https://doc.traefik.io/traefik/routing/routers/
-              '';
+      type = lib.types.attrsOf
+        (lib.types.submodule ({ ... }: {
+          options = {
+            protocol = lib.mkOption {
+              type = lib.types.enum [ "tcp" "udp" "http" ];
             };
-            priority = lib.mkOption {
-              type = lib.types.int;
-              default = 0;
-            };
-            tls = {
-              enable = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
+            router = {
+              rule = lib.mkOption {
+                type = lib.types.str;
+                default = "";
                 description = ''
-                  Enable tls for router, default = true;
+                  The routing rule for this service. The rules are defined here: https://doc.traefik.io/traefik/routing/routers/
+                  Only used on tcp and http routes.
                 '';
               };
-              options = lib.mkOption {
-                type = lib.types.attrs;
-                default = {
-                  certResolver = "letsencrypt";
+              priority = lib.mkOption {
+                type = lib.types.int;
+                default = 0;
+                description = ''
+                  The priority of this rule, if multiple rules match a request, the highest priority rule will be used.
+                '';
+              };
+              tls = {
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  description = ''
+                    Enable tls for router, default = true; Only for tcp and udp.
+                  '';
                 };
+                options = lib.mkOption {
+                  type = lib.types.attrs;
+                  default = {
+                    certResolver = "letsencrypt";
+                  };
+                  description = ''
+                    Options for tls, default is to use the letsencrypt certResolver
+                  '';
+                };
+              };
+              middlewares = lib.mkOption {
+                type = lib.types.listOf (lib.types.str);
+                default = [ ];
                 description = ''
-                  Options for tls, default is to use the letsencrypt certResolver
+                  The middlewares applied to the router, the middlewares are applied in order.
                 '';
               };
-            };
-            middlewares = lib.mkOption {
-              type = lib.types.listOf (lib.types.str);
-              default = [ ];
-              description = ''
-                The middlewares applied to the router, the middlewares are applied in order.
-              '';
-            };
-            entryPoints = lib.mkOption {
-              type = lib.types.listOf (lib.types.str);
-              default = [ "websecure" ];
-              description = ''
-                The Entrypoint of the service, default is 443 (websecure)
-              '';
+              entryPoints = lib.mkOption {
+                type = lib.types.listOf (lib.types.str);
+                default = [ "websecure" ];
+                description = ''
+                  The entrypoints for the service, default is 443 websecure.
+                '';
+              };
             };
           };
           servers = lib.mkOption {
@@ -138,8 +153,7 @@
               '';
             };
           };
-        };
-      }));
+        }));
       default = { };
       description = ''
         A simple setup to configure http loadBalancer services and routers.
@@ -149,7 +163,36 @@
 
   config = lib.mkIf config.nix-tun.services.traefik.enable {
 
-    networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port) config.nix-tun.services.traefik.entrypoints;
+    nix-tun.services.traefik.entrypoints = {
+      web = {
+        port = "80";
+        protocol = "tcp";
+        http = {
+          redirections = {
+            entryPoint = {
+              to = "websecure";
+              scheme = "https";
+            };
+          };
+        };
+      };
+      websecure = {
+        port = "443";
+        protocol = "tcp";
+      };
+      prometheus = lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
+        bind-ip = "127.0.0.1";
+        port = "9100";
+        protocol = "tcp";
+      };
+    };
+
+    networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
+      (lib.attrsets.filterAttrs (name: value: value.protocol == "tcp") config.nix-tun.services.traefik.entrypoints);
+
+    networking.firewall.allowedUDPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
+      (lib.attrsets.filterAttrs (name: value: value.protocol == "udp") config.nix-tun.services.traefik.entrypoints);
+
     users.users.traefik.extraGroups = lib.mkIf config.nix-tun.services.traefik.enable_docker [ "docker" ];
     systemd.services.traefik.environment.LD_LIBRARY_PATH = config.system.nssModules.path;
     systemd.services.traefik.serviceConfig.LimitNPROC = lib.mkForce 8192;
@@ -175,15 +218,18 @@
                     })
                   ]
               )
-              config.nix-tun.services.traefik.services)
+              (lib.attrsets.filterAttrs
+                (n: v: v.protocol == "http")
+                config.nix-tun.services.traefik.services))
             (lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
               prometheus-traefik = {
                 rule = "Host(`traefik.${config.networking.fqdnOrHostName}`)";
-                entryPoints = "prometheus";
+                entryPoints = "web";
                 service = "prometheus@internal";
               };
             })
           ];
+
           services =
             lib.attrsets.mapAttrs
               (name: value: {
@@ -198,13 +244,66 @@
                     };
                   })];
               })
-              config.nix-tun.services.traefik.services;
+              (lib.attrsets.filterAttrs
+                (n: v: v.protocol == "http")
+                config.nix-tun.services.traefik.services);
+        };
+        tcp = {
+          routers = (lib.attrsets.mapAttrs
+            (
+              name: value:
+                lib.mkMerge [
+                  {
+                    rule = value.router.rule;
+                    priority = value.router.priority;
+                    middlewares = value.router.middlewares;
+                    service = name;
+                    entryPoints = value.router.entryPoints;
+                  }
+                  (lib.mkIf value.router.tls.enable {
+                    tls = value.router.tls.options;
+                  })
+                ]
+            )
+            (lib.attrsets.filterAttrs
+              (n: v: v.protocol == "tcp")
+              config.nix-tun.services.traefik.services));
+
+          services = lib.attrsets.mapAttrs
+            (name: value: {
+              loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
+            })
+            (lib.attrsets.filterAttrs
+              (n: v: v.protocol == "tcp")
+              config.nix-tun.services.traefik.services);
+
+        };
+        udp = {
+          routers = (lib.attrsets.mapAttrs
+            (name: value: {
+              service = name;
+              entryPoints = value.router.entryPoints;
+            })
+            (lib.attrsets.filterAttrs
+              (n: v: v.protocol == "udp")
+              config.nix-tun.services.traefik.services));
+
+          services =
+            (lib.attrsets.mapAttrs
+              (
+                name: value: {
+                  loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
+                }
+              )
+              (lib.attrsets.filterAttrs
+                (n: v: v.protocol == "udp")
+                config.nix-tun.services.traefik.services));
+
         };
       };
 
       staticConfigOptions = lib.mkMerge [
         {
-
           providers.docker = lib.mkIf config.nix-tun.services.traefik.enable_docker {
             exposedByDefault = false;
             watch = true;
@@ -221,13 +320,9 @@
 
           entryPoints =
             (lib.attrsets.mapAttrs
-              (name: value:
-                lib.attrsets.mergeAttrsList [
-                  {
-                    address = ":${toString value.port}";
-                  }
-                  (lib.attrsets.filterAttrs (n: v: n != "port") value)
-                ])
+              (name: value: {
+                address = "${value.bind-ip}:${toString value.port}/${value.protocol}";
+              })
               config.nix-tun.services.traefik.entrypoints);
 
           api = {

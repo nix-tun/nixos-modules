@@ -36,7 +36,7 @@
                     A Nixos Conifugration for the Container.
                   '';
                 };
-              exposePorts = lib.mkOption {
+              exposedPorts = lib.mkOption {
                 type = lib.types.listOf (lib.types.submodule ({ ... }: {
                   options = {
                     port = lib.mkOption {
@@ -171,23 +171,6 @@
             (name: value: (lib.lists.map (secret-name: { "${name}-${secret-name}" = { mode = "0500"; }; }) value.secrets))
             config.nix-tun.utils.containers)));
 
-      nix-tun.services.traefik.services =
-        (lib.mkMerge
-          (lib.attrsets.mapAttrsToList
-            (name: value: (lib.attrsets.mapAttrs'
-              (domain-name: domain-value: {
-                name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
-                value = {
-                  router = {
-                    rule = "Host(`${domain-value.domain}`)";
-                    entryPoints = domain-value.entryPoints;
-                  };
-                  servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
-                };
-              })
-              value.domains))
-            config.nix-tun.utils.containers));
-
       nix-tun.storage.persist.subvolumes =
         lib.attrsets.mapAttrs'
           (name: value: {
@@ -205,6 +188,45 @@
           })
           config.nix-tun.utils.containers;
 
+      nix-tun.services.traefik = (lib.mkMerge
+        (lib.attrsets.mapAttrsToList
+          (name: container:
+            {
+              entrypoints = (lib.listToAttrs
+                (v: {
+                  name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
+                  value = {
+                    port = "${v.hostPort}/${v.protocol}";
+                  };
+                })
+                container.exposedPorts);
+
+              services = (lib.mkMerge [
+                (lib.listToAttrs
+                  (v: {
+                    name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
+                    value = {
+                      router.entrypoints = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
+                      servers = [ "${name}:${v.port}" ];
+                    };
+                  })
+                  container.exposedPorts)
+                (lib.attrsets.mapAttrs'
+                  (domain-name: domain-value: {
+                    name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+                    value = {
+                      router = {
+                        rule = "Host(`${domain-value.domain}`)";
+                        entryPoints = domain-value.entryPoints;
+                      };
+                      servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
+                    };
+                  })
+                  container.domains)
+              ]);
+            })
+          config.nix-tun.utils.containers));
+
       containers =
         lib.attrsets.mapAttrs
           (name: value: {
@@ -218,7 +240,7 @@
                 hostPort = item.hostPort;
                 protocol = item.protocol;
               })
-              value.exposePorts;
+              value.exposedPorts;
             # This ensures each container uses seperate uids
             privateUsers = "pick";
             extraFlags = lib.mkMerge [
@@ -238,7 +260,20 @@
                   config = {
                     # Set the correct owner, group and mode for the volumes 
                     systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") value.volumes);
-                    networking.firewall.allowedTCPPorts = (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains);
+                    # Disable Firewall for specific Ports
+                    networking.firewall =
+                      let
+                        exposedTCPPorts = lib.lists.map (x: x.port) (lib.lists.filter (x: x.protocol == "tcp") value.exposedPorts);
+                        exposedUDPPorts = lib.lists.map (x: x.port) (lib.lists.filter (x: x.protocol == "udp") value.exposedPorts);
+                      in
+                      {
+                        allowedTCPPorts = lib.mkMerge [
+                          # The Ports for the domains connected to the container.
+                          (lib.attrsets.mapAttrsToList (domain-name: domain-value: domain-value.port) value.domains)
+                          exposedTCPPorts
+                        ];
+                        allowedUDPPorts = exposedUDPPorts;
+                      };
                   };
                 })
                 value.config

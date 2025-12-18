@@ -204,8 +204,8 @@
                 provisionPath = pkgs.runCommand "grafana-provisioning" { } (lib.strings.concatLines
                   (lib.attrsets.mapAttrsToList
                     (category: settings: ''
-                      mkdir $out
-                      mkdir $out/${category}
+                      mkdir -p $out
+                      mkdir -p $out/${category}
                       cp ${(pkgs.formats.yaml {}).generate "${category}.yaml" settings} $out/${category}/${category}.yaml
                     '')
                     config.nix-tun.services.grafana.provision));

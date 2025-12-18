@@ -201,7 +201,7 @@
 
             services.grafana =
               let
-                provisionPath = pkgs.runCommand "grafana-provisioning" (lib.strings.concatLines
+                provisionPath = pkgs.runCommand "grafana-provisioning" { } (lib.strings.concatLines
                   (lib.attrsets.mapAttrsToList
                     (category: settings: ''
                       mkdir -p $out/${category}

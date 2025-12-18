@@ -28,10 +28,10 @@
           };
         }));
         default = {
-          alerting = { apiVersion = 1; };
-          datasources = { apiVersion = 1; };
-          dashboards = { apiVersion = 1; };
-          plugins = { apiVersion = 1; };
+          alerting = { };
+          datasources = { };
+          dashboards = { };
+          plugins = { };
         };
       };
       prometheus = {

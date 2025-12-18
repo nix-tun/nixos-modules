@@ -14,7 +14,7 @@
     lib.mkIf opts.enable {
       networking.firewall =
         let
-          range = lib.lists.range config.services.coturn.min-port config.services.coturn.max-port;
+          range = lib.lists.range 49000 50000;
         in
         {
           allowedUDPPortRanges = range;
@@ -31,7 +31,7 @@
                 hostPort = item;
                 protocol = "udp";
               })
-            lib.range [ 49000 50000 ])
+            lib.range 49000 50000)
           {
             port = 3478;
             hostPort = 3478;

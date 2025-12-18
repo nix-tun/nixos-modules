@@ -192,17 +192,17 @@
         (lib.attrsets.mapAttrsToList
           (name: container:
             {
-              entrypoints = (lib.listToAttrs
+              entrypoints = (lib.listToAttrs (lib.lists.map
                 (v: {
                   name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
                   value = {
                     port = "${v.hostPort}/${v.protocol}";
                   };
                 })
-                container.exposedPorts);
+                container.exposedPorts));
 
               services = (lib.mkMerge [
-                (lib.listToAttrs
+                (lib.listToAttrs (lib.lists.map
                   (v: {
                     name = "container-${name}-${v.protocol}-${v.hostPort}-${v.port}";
                     value = {
@@ -210,7 +210,7 @@
                       servers = [ "${name}:${v.port}" ];
                     };
                   })
-                  container.exposedPorts)
+                  container.exposedPorts))
                 (lib.attrsets.mapAttrs'
                   (domain-name: domain-value: {
                     name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";

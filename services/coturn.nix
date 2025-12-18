@@ -12,16 +12,6 @@
       opts = config.nix-tun.services.coturn;
     in
     lib.mkIf opts.enable {
-      networking.firewall =
-        let
-          range = lib.lists.range 49000 50000;
-        in
-        {
-          allowedUDPPortRanges = range;
-          allowedUDPPorts = [ 3478 5349 ];
-          allowedTCPPorts = [ 3478 5349 ];
-        };
-
       nix-tun.utils.containers."coturn" = {
         exposedPorts = lib.mkMerge [
           (lib.lists.map
@@ -31,7 +21,7 @@
                 hostPort = item;
                 protocol = "udp";
               })
-            lib.range 49000 50000)
+            lib.lists.range 49000 50000)
           {
             port = 3478;
             hostPort = 3478;

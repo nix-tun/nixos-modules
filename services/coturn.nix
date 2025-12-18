@@ -22,26 +22,28 @@
                 protocol = "udp";
               })
             (lib.lists.range 49000 50000))
-          {
-            port = 3478;
-            hostPort = 3478;
-            protocol = "udp";
-          }
-          {
-            port = 5349;
-            hostPort = 5349;
-            protocol = "udp";
-          }
-          {
-            port = 3478;
-            hostPort = 3478;
-            protocol = "tcp";
-          }
-          {
-            port = 5349;
-            hostPort = 5349;
-            protocol = "tcp";
-          }
+          [
+            {
+              port = 3478;
+              hostPort = 3478;
+              protocol = "udp";
+            }
+            {
+              port = 5349;
+              hostPort = 5349;
+              protocol = "udp";
+            }
+            {
+              port = 3478;
+              hostPort = 3478;
+              protocol = "tcp";
+            }
+            {
+              port = 5349;
+              hostPort = 5349;
+              protocol = "tcp";
+            }
+          ]
         ];
         secrets = [
           "auth-secret"

@@ -201,13 +201,13 @@
 
             services.grafana =
               let
-                provisionPath = pkgs.runCommand "grafana-provisioning" lib.strings.concatLines
+                provisionPath = pkgs.runCommand "grafana-provisioning" (lib.strings.concatLines
                   (lib.attrsets.mapAttrsToList
                     (category: settings: ''
                       mkdir -p $out/${category}
                       ${(pkgs.formats.yaml {}).generate "$out/${category}/${category}.yaml" settings}
                     '')
-                    config.nix-tun.services.grafana.provision);
+                    config.nix-tun.services.grafana.provision));
               in
               {
                 enable = true;

@@ -21,7 +21,7 @@
                 hostPort = item;
                 protocol = "udp";
               })
-            lib.lists.range 49000 50000)
+            (lib.lists.range 49000 50000))
           {
             port = 3478;
             hostPort = 3478;

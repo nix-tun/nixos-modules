@@ -213,7 +213,7 @@
                 enable = true;
                 declarativePlugins = with pkgs.grafanaPlugins;
                   [
-                    grafana-synthetic-monitoring-app
+                    #grafana-synthetic-monitoring-app
                     grafana-metricsdrilldown-app
                     grafana-lokiexplore-app
                     grafana-exploretraces-app

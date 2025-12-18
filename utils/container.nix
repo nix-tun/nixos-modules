@@ -50,6 +50,7 @@
                     };
                   };
                 }));
+                default = [ ];
               };
               domains = lib.mkOption {
                 type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {

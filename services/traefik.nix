@@ -249,62 +249,66 @@
                 (n: v: v.protocol == "http")
                 config.nix-tun.services.traefik.services);
         };
-        tcp = lib.mkIf { } != (lib.attrsets.filterAttrs
-          (n: v: v.protocol == "tcp")
-          config.nix-tun.services.traefik.services) {
-          routers = (lib.attrsets.mapAttrs
-            (
-              name: value:
-                lib.mkMerge [
-                  {
-                    rule = value.router.rule;
-                    priority = value.router.priority;
-                    middlewares = value.router.middlewares;
-                    service = name;
-                    entryPoints = value.router.entryPoints;
-                  }
-                  (lib.mkIf value.router.tls.enable {
-                    tls = value.router.tls.options;
-                  })
-                ]
-            )
-            (lib.attrsets.filterAttrs
-              (n: v: v.protocol == "tcp")
-              config.nix-tun.services.traefik.services));
-
-          services = lib.attrsets.mapAttrs
-            (name: value: {
-              loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
-            })
-            (lib.attrsets.filterAttrs
-              (n: v: v.protocol == "tcp")
-              config.nix-tun.services.traefik.services);
-
-        };
-        udp = lib.mkIf { } != (lib.attrsets.filterAttrs
-          (n: v: v.protocol == "udp")
-          config.nix-tun.services.traefik.services) {
-          routers = (lib.attrsets.mapAttrs
-            (name: value: {
-              service = name;
-              entryPoints = value.router.entryPoints;
-            })
-            (lib.attrsets.filterAttrs
-              (n: v: v.protocol == "udp")
-              config.nix-tun.services.traefik.services));
-
-          services =
-            (lib.attrsets.mapAttrs
+        tcp = lib.mkIf
+          ({ } != (lib.attrsets.filterAttrs
+            (n: v: v.protocol == "tcp")
+            config.nix-tun.services.traefik.services))
+          {
+            routers = (lib.attrsets.mapAttrs
               (
-                name: value: {
-                  loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
-                }
+                name: value:
+                  lib.mkMerge [
+                    {
+                      rule = value.router.rule;
+                      priority = value.router.priority;
+                      middlewares = value.router.middlewares;
+                      service = name;
+                      entryPoints = value.router.entryPoints;
+                    }
+                    (lib.mkIf value.router.tls.enable {
+                      tls = value.router.tls.options;
+                    })
+                  ]
               )
+              (lib.attrsets.filterAttrs
+                (n: v: v.protocol == "tcp")
+                config.nix-tun.services.traefik.services));
+
+            services = lib.attrsets.mapAttrs
+              (name: value: {
+                loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
+              })
+              (lib.attrsets.filterAttrs
+                (n: v: v.protocol == "tcp")
+                config.nix-tun.services.traefik.services);
+
+          };
+        udp = lib.mkIf
+          ({ } != (lib.attrsets.filterAttrs
+            (n: v: v.protocol == "udp")
+            config.nix-tun.services.traefik.services))
+          {
+            routers = (lib.attrsets.mapAttrs
+              (name: value: {
+                service = name;
+                entryPoints = value.router.entryPoints;
+              })
               (lib.attrsets.filterAttrs
                 (n: v: v.protocol == "udp")
                 config.nix-tun.services.traefik.services));
 
-        };
+            services =
+              (lib.attrsets.mapAttrs
+                (
+                  name: value: {
+                    loadBalancer.servers = builtins.map (value: { address = value; }) value.servers;
+                  }
+                )
+                (lib.attrsets.filterAttrs
+                  (n: v: v.protocol == "udp")
+                  config.nix-tun.services.traefik.services));
+
+          };
       };
 
       staticConfigOptions = lib.mkMerge [

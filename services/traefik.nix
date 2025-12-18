@@ -28,7 +28,7 @@
     };
     entrypoints = lib.mkOption {
       type = lib.types.submodule {
-        freeformType = pkgs.formats.toml { };
+        freeformType = (pkgs.formats.toml { }).type;
         options = {
           port = lib.mkOption {
             type = lib.types.port;

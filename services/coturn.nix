@@ -53,6 +53,7 @@
           , lib
           , ...
           }: {
+            systemd.services.coturn.serviceConfig.LoadCredential = "auth-secret:/secret/auth-secret";
             # enable coturn
             services.coturn = {
               enable = true;
@@ -61,7 +62,7 @@
               min-port = 49000;
               max-port = 50000;
               use-auth-secret = true;
-              static-auth-secret-file = "/secret/auth-secret";
+              static-auth-secret-file = "$CREDENTIALS_DIRECTORY/auth-secret";
               extraConfig = ''
                 # for debugging
                 verbose

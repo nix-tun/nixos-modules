@@ -208,6 +208,7 @@
                   (v: {
                     name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
                     value = {
+		      protocol = v.protocol;
                       router.entryPoints = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
                       servers = [ "${name}:${builtins.toString v.port}" ];
                     };

@@ -14,11 +14,7 @@
     lib.mkIf opts.enable {
       networking.firewall =
         let
-          range = with config.services.coturn;
-            lib.singleton {
-              from = min-port;
-              to = max-port;
-            };
+          range = lib.lists.range config.services.coturn.min-port config.services.coturn.max-port;
         in
         {
           allowedUDPPortRanges = range;

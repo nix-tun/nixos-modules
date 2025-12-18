@@ -33,6 +33,28 @@
       opts = config.nix-tun.services.containers.nextcloud;
     in
     lib.mkIf opts.enable {
+      nix-tun.utils.containers.spreed-signaling = {
+        secrets = [
+          "server-conf"
+        ];
+
+        domains.signaling = {
+          domain = "signaling.${opts.hostname}";
+          port = 8080;
+        };
+
+        config = { ... }: {
+          systemd.services.spreed-signaling = {
+            confinement.enable = true;
+            serviceConfig.LoadCredential = "config:/secret/server-conf";
+            script =
+              ''
+                ${pkgs.nextcloud-spreed-signaling} --config $CREDENTIAL_DIRECTORY/config
+              '';
+          };
+        };
+      };
+
       nix-tun.utils.containers.nextcloud = {
         secrets = [
           "admin-pass"
@@ -57,6 +79,8 @@
           environment.systemPackages = [
             pkgs.samba
           ];
+
+
           services.nextcloud = {
             enable = true;
             package = pkgs.nextcloud32;

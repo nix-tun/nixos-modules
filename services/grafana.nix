@@ -206,7 +206,7 @@
                     (category: settings: ''
                       mkdir $out
                       mkdir $out/${category}
-                      ${(pkgs.formats.yaml {}).generate "$out/${category}/${category}.yaml" settings}
+                      cp ${(pkgs.formats.yaml {}).generate "${category}.yaml" settings} $out/${category}/${category}.yaml
                     '')
                     config.nix-tun.services.grafana.provision));
               in

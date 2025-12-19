@@ -26,58 +26,31 @@
         mode = "444";
       };
 
-      nix-tun.services.traefik.services."onlyoffice" = {
-        router.rule = "Host(`${opts.hostname}`)";
-        servers = [ "http://${config.containers.onlyoffice.config.networking.hostName}:8000" ];
-      };
-
       containers.onlyoffice = {
-        ephemeral = true;
-        autoStart = true;
-        privateNetwork = true;
-        hostAddress = "192.168.131.10";
-        localAddress = "192.168.131.11";
-
         bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.onlyoffice_jwt.path;
             mountPoint = config.sops.secrets.onlyoffice_jwt.path;
           };
-          "resolv" = {
-            hostPath = "/etc/resolv.conf";
-            mountPoint = "/etc/resolv.conf";
-          };
+        };
+
+      };
+
+      nix-tun.utils.containers.onlyoffice = {
+        domains.onlyoffice = {
+          port = 8000;
+          domain = config.containers.onlyoffice.config.networking.hostName;
+          healthcheck = "/";
         };
 
         config = { ... }: {
-          imports = [
-            inputs.authentik-nix.nixosModules.default
-          ];
-
           nixpkgs.config.allowUnfree = true;
-
-          networking.hostName = "onlyoffice";
-
           services.onlyoffice = {
             enable = true;
             hostname = "https://${opts.hostname}";
             jwtSecretFile = config.sops.secrets.onlyoffice_jwt.path;
           };
-          networking = {
-            firewall = {
-              enable = true;
-              allowedTCPPorts = [ 8000 ];
-            };
-            # Use systemd-resolved inside the container
-            # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
-            useHostResolvConf = lib.mkForce false;
-          };
-
-          services.resolved.enable = true;
-
-          system.stateVersion = "23.11";
         };
-
       };
     };
 }

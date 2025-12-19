@@ -50,7 +50,7 @@
             serviceConfig.LoadCredential = "config:/secret/server-conf";
             script =
               ''
-                ${pkgs.nextcloud-spreed-signaling}/bin/server --config $CREDENTIAL_DIRECTORY/config
+                ${pkgs.nextcloud-spreed-signaling}/bin/server --config $CREDENTIALS_DIRECTORY/config
               '';
           };
         };

@@ -46,10 +46,11 @@
         config = { ... }: {
           systemd.services.spreed-signaling = {
             confinement.enable = true;
+            wantedBy = [ "multiuser.target" ];
             serviceConfig.LoadCredential = "config:/secret/server-conf";
             script =
               ''
-                ${pkgs.nextcloud-spreed-signaling} --config $CREDENTIAL_DIRECTORY/config
+                ${pkgs.nextcloud-spreed-signaling}/bin/server --config $CREDENTIAL_DIRECTORY/config
               '';
           };
         };

@@ -235,8 +235,8 @@
                 config.nix-tun.services.traefik.services))
             (lib.mkIf config.nix-tun.services.traefik.enable_prometheus {
               prometheus-traefik = {
-                rule = "Host(`traefik.${config.networking.fqdnOrHostName}`)";
-                entryPoints = "web";
+                rule = "ClientIP(`127.0.0.1`)";
+                entryPoints = "prometheus";
                 service = "prometheus@internal";
               };
             })

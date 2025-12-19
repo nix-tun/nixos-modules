@@ -27,7 +27,7 @@
         (name: value: {
           name = "alloy/container-${name}-journal.alloy";
           value.text = ''
-            loki.source.journal "logs_integrations_container_${name}_journal_scrape" {
+            loki.source.journal "logs_integrations_container_${lib.strings.replaceStrings ["-" "_"] name}_journal_scrape" {
               path = "${config.nix-tun.storage.persist.path}/containers/${name}/log"
               max_age       = "24h0m0s"
               relabel_rules = discovery.relabel.logs_integrations_integrations_node_exporter_journal_scrape.rules

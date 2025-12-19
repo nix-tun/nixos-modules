@@ -168,7 +168,7 @@
       prometheus.scrape "traefik" {
         scrape_interval = 15
         targets    = [
-          { "__address__" = "127.0.0.1:9100", "instance" = "constants.hostname"}
+          { "__address__" = "127.0.0.1:9100", "instance" = "constants.hostname"},
         ]
         job_name = "traefik"
         forward_to = [prometheus.remote_write.default.receiver]

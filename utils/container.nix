@@ -70,6 +70,13 @@
                       type = lib.types.str;
                       default = name;
                     };
+                    healthcheck = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                      description = ''
+                        The healthcheck path for this domain, if null then no healthcheck is performed.
+                      '';
+                    };
                   };
                 }));
                 default = { };
@@ -222,6 +229,10 @@
                       router = {
                         rule = "Host(`${domain-value.domain}`)";
                         entryPoints = domain-value.entryPoints;
+                      };
+                      healthcheck = lib.mkIf (domain-value.healthcheck != null) {
+                        enable = true;
+                        path = domain-value.healthcheck;
                       };
                       servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
                     };

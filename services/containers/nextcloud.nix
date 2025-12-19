@@ -44,7 +44,7 @@
         };
 
         config = { ... }: {
-          systemd.services.spreedsignaling = {
+          systemd.services.spreed-signaling = {
             wantedBy = [ "multi-user.target" ];
             serviceConfig.LoadCredential = "config:/secret/server-conf";
             script =
@@ -63,6 +63,7 @@
         domains.nextcloud = {
           domain = "${opts.hostname}";
           port = 80;
+          healthcheck = "/";
         };
 
         volumes = {
@@ -79,7 +80,6 @@
           environment.systemPackages = [
             pkgs.samba
           ];
-
 
           services.nextcloud = {
             enable = true;

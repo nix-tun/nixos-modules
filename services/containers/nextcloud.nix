@@ -44,7 +44,7 @@
         };
 
         config = { ... }: {
-          systemd.services.spreed-signaling = {
+          systemd.services.spreedsignaling = {
             wantedBy = [ "multi-user.target" ];
             serviceConfig.LoadCredential = "config:/secret/server-conf";
             script =

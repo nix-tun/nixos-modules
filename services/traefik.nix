@@ -164,7 +164,7 @@
 
   config = lib.mkIf config.nix-tun.services.traefik.enable {
 
-    environment.etc."alloy/traefik-metrics.alloy".text = (lib.mkIf config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) ''
+    environment.etc."alloy/traefik-metrics.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) ''
       prometheus.scrape "traefik" {
         scrape interval = 15
         targets    = [

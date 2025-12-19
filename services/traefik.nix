@@ -166,7 +166,7 @@
 
     environment.etc."alloy/traefik-metrics.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) ''
       prometheus.scrape "traefik" {
-        scrape interval = 15
+        scrape_interval = 15
         targets    = [
           { "__address__" = "127.0.0.1:9100", "instance" = "constants.hostname"}
         ]

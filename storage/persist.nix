@@ -123,12 +123,12 @@ in
       (
         name: value:
           [
-            "v '${opts.path}/${name}' ${value.mode} ${value.owner} ${value.group} -"
-            (lib.mkIf value.backup "d '${opts.path}/${name}/.snapshots' ${value.mode} ${value.owner} ${value.group} -")
+            "v '${value.path}' ${value.mode} ${value.owner} ${value.group} -"
+            (lib.mkIf value.backup "d '${value.path}/.snapshots' ${value.mode} ${value.owner} ${value.group} -")
           ]
           ++ lib.attrsets.mapAttrsToList
             (
-              n: v: "d '${opts.path}/${name}/${n}' ${v.mode} ${v.owner} ${v.group} -"
+              n: v: "d '${value.path}/${n}' ${v.mode} ${v.owner} ${v.group} -"
             )
             value.directories
       )
@@ -167,9 +167,9 @@ in
 
         volume = lib.attrsets.mapAttrs'
           (name: value: {
-            name = "${opts.path}/${name}";
+            name = "${value.path}";
             value = {
-              subvolume = "${opts.path}/${name}";
+              subvolume = "${value.path}";
               snapshot_dir = ".snapshots";
             };
           })

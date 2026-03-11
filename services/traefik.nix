@@ -164,16 +164,18 @@
 
   config = lib.mkIf config.nix-tun.services.traefik.enable {
 
-    environment.etc."alloy/traefik-metrics.alloy".text = lib.mkIf (config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) ''
-      prometheus.scrape "traefik" {
-        scrape_interval = "15s"
-        targets    = [
-          { "__address__" = "127.0.0.1:9100", "instance" = "constants.hostname"},
-        ]
-        job_name = "traefik"
-        forward_to = [prometheus.remote_write.default.receiver]
-      }
-    '';
+    environment.etc."alloy/traefik-metrics.alloy" =  lib.mkIf (config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) { 
+      text = ''
+        prometheus.scrape "traefik" {
+          scrape_interval = "15s"
+          targets    = [
+            { "__address__" = "127.0.0.1:9100", "instance" = "constants.hostname"},
+          ]
+          job_name = "traefik"
+          forward_to = [prometheus.remote_write.default.receiver]
+        }
+      '';
+    };
 
     nix-tun.services.traefik.entrypoints = {
       web = {

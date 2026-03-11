@@ -263,10 +263,10 @@
                 "--network-zone=container"
                 "--resolv-conf=bind-stub"
                 "--uuid=${builtins.hashString "md5" name}"
-                "--bind=${config.nix-tun.storage.subvolumes."containers/${name}".path}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
+                "--bind=${config.nix-tun.storage.persist.subvolumes."containers/${name}".path}/log:/var/log/journal/${builtins.hashString "md5" name}:idmap"
               ]
               # This maps the owner of the directory inside the container to the owner of the directory outside the container
-              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.subvolumes."containers/${name}".path}/${n}:${n}:idmap") value.volumes)
+              (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.subvolumes."containers/${name}".path}/${n}:${n}:idmap") value.volumes)
               (lib.lists.map (secret: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets)
             ];
             config = lib.mkMerge

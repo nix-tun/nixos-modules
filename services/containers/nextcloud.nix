@@ -63,7 +63,6 @@
         domains.nextcloud = {
           domain = "${opts.hostname}";
           port = 80;
-          healthcheck = "/";
         };
 
         volumes = {
@@ -83,7 +82,7 @@
 
           services.nextcloud = {
             enable = true;
-            package = pkgs.nextcloud32;
+            package = pkgs.nextcloud33;
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [ all.pdlib all.smbclient ];

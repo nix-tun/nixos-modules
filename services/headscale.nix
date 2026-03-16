@@ -1,4 +1,4 @@
-{ pkgs, config, lib, ... }: {
+{ pkgs, config, lib, inputs, ... }: {
   options.nix-tun.services.headscale = {
     enable = lib.mkEnableOption "Enable Headscale Server";
     domain = lib.mkOption {
@@ -10,7 +10,7 @@
     };
   };
 
-  config = lib.mkIf config.nix-tun.services.headscale.enable {
+  config = let cfg = config.nix-tun.services.headscale; in lib.mkIf cfg.enable {
     nix-tun.utils.containers.headscale = {
       domains = {
         headscale = {
@@ -30,13 +30,16 @@
       secrets = [
         "headplane-cookie-secret"
       ];
-      config = { ... }: {
+      config = { config, ... }: {
+        import = [
+          inputs.headplane.nixosModules.headplane
+        ];
         services.headscale = {
           enable = true;
           address = "0.0.0.0";
           port = 8080;
           settings = {
-            serverUrl = config.nix-tun.services.headscale.domain;
+            serverUrl = cfg.domain;
             dns = {
               magic_dns = true;
               override_local_dns = true;
@@ -46,7 +49,7 @@
                 "2620:fe::fe"
                 "2620:fe::9"
               ];
-              base_domain = "tailnet.${config.nix-tun.services.headscale.domain}";
+              base_domain = "tailnet.${cfg.domain}";
             };
           };
         };
@@ -55,7 +58,7 @@
           settings = {
             headscale = {
               config_path = config.services.headscale.config_path;
-              url = config.nix-tun.services.headscale.domain;
+              url = cfg.domain;
             };
             integration = {
               agent.enabled = true;

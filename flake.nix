@@ -35,7 +35,6 @@
         [
           ./yubikey-gpg.nix
           inputs.impermanence.nixosModules.impermanence
-          inputs.headplane.nixosModules.headplane
         ];
       };
     };

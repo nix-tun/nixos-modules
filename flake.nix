@@ -5,6 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     impermanence.url = "github:nix-community/impermanence";
     authentik-nix.url = "github:nix-community/authentik-nix";
+    headplane.url = "github:tale/headplane";
   };
 
   outputs = { nixpkgs, ... } @ inputs:
@@ -23,22 +24,18 @@
     {
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-      nixosModules.nix-tun = { pkgs, ... }: {
-        imports = [
+      nixosModules.nix-tun = { pkgs, lib, ... }: {
+        imports = (lib.filter
+          (n: lib.strings.hasSuffix ".nix" n)
+          (lib.lists.concatLists [
+            (lib.filesystem.listFilesRecursive ./services)
+            (lib.filesystem.listFilesRecursive ./utils)
+            (lib.filesystem.listFilesRecursive ./storage)
+          ])) ++
+        [
           ./yubikey-gpg.nix
-          ./storage/persist.nix
-          ./storage/backup-server.nix
-          ./services/containers/nextcloud.nix
-          ./services/containers/authentik.nix
-          ./services/containers/onlyoffice.nix
-          ./services/grafana.nix
-          ./services/alloy.nix
-          ./services/coturn.nix
-          ./utils/container.nix
-          #./services/matrix.nix
-
           inputs.impermanence.nixosModules.impermanence
-          ./services/traefik.nix
+          inputs.headplane.nixosModules.headplane
         ];
       };
     };

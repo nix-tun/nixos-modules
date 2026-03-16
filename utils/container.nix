@@ -70,6 +70,14 @@
                       type = lib.types.str;
                       default = name;
                     };
+                    path = lib.mkOption {
+                      type = lib.types.str;
+                      default = "/";
+                      description = ''
+                        The path under which this service should be served,
+                        by default "/".
+                      '';
+                    };
                     healthcheck = lib.mkOption {
                       type = lib.types.nullOr lib.types.str;
                       default = null;
@@ -227,7 +235,7 @@
                     name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
                     value = {
                       router = {
-                        rule = "Host(`${domain-value.domain}`)";
+                        rule = "Host(`${domain-value.domain}`) && PathPrefix(`${domain-value.path}`)";
                         entryPoints = domain-value.entryPoints;
                       };
                       healthcheck = lib.mkIf (domain-value.healthcheck != null) {
@@ -297,3 +305,4 @@
           config.nix-tun.utils.containers;
     };
 }
+

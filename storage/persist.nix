@@ -108,7 +108,8 @@ in
           "/var/log" = { };
           "/var/lib/nixos" = { }; # For Correct User Mapping
           "/var/lib/systemd/coredump" = { };
-          "/etc/NetworkManager/system-connections/" = lib.mkIf config.networking.networkmanager.enable { mode = "0700"; };
+        } // lib.mkIf config.networking.networkmanager.enable {
+          "/etc/NetworkManager/system-connections" = { mode = "0700"; };
         };
         bindMountDirectories = true;
       };
@@ -155,6 +156,10 @@ in
         };
       })
       (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
+
+    fileSystems = lib.mkMerge
+      (lib.map (name: { "${name}".fsType = "none"; })
+        (lib.flatten (lib.map (subvolumes: lib.attrsets.attrNames subvolumes.directories) (lib.attrsets.attrValues (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes)))));
 
     # Automatically snapshots the Persistent Subvolumes
     services.btrbk.instances.btrbk = {

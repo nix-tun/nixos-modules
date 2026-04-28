@@ -36,6 +36,8 @@
       nix-tun.utils.containers.spreed-signaling = {
         secrets = [
           "server-conf"
+          "blockkey"
+          "hashkey"
         ];
 
         domains.signaling = {
@@ -43,14 +45,25 @@
           port = 8080;
         };
 
+
         config = { ... }: {
-          systemd.services.spreed-signaling = {
-            wantedBy = [ "multi-user.target" ];
-            serviceConfig.LoadCredential = "config:/secret/server-conf";
-            script =
-              ''
-                ${pkgs.nextcloud-spreed-signaling}/bin/server --config $CREDENTIALS_DIRECTORY/config
-              '';
+          services.nextcloud-spreed-signaling = {
+            enable = true;
+            backends.nextcloud = {
+              secretFile = "/secret/server-conf";
+              urls = [
+                "https://${opts.hostname}"
+              ];
+            };
+            settings = {
+              clients.internalsecretFile = "/secret/server-conf";
+              http.listen = "0.0.0.0:8080";
+              sessions = {
+                blockkeyFile = "/secret/blockkey";
+                hashkeyFile = "/secret/hashkey";
+              };
+            };
+
           };
         };
       };

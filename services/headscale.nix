@@ -112,8 +112,6 @@
               };
               server = {
                 cookie_secure = true;
-                cookie_domain = cfg.domain;
-                base_url = "https://${cfg.domain}";
                 host = "0.0.0.0";
                 cookie_secret_path = "/secret/headplane-cookie-secret";
               };

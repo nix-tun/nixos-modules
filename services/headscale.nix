@@ -58,9 +58,6 @@
           "headplane-headscale-api" = { owner = "headscale"; group = "headscale"; };
         };
         config = { config, ... }: {
-          imports = [ inputs.headplane.nixosModules.headplane ];
-          nixpkgs.overlays = [ inputs.headplane.overlays.default ];
-
           users.users.headscale.uid = 994;
           users.groups.headscale.gid = 994;
 

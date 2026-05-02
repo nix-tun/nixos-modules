@@ -109,6 +109,7 @@
               integration = {
                 proc.enabled = true;
                 agent.enabled = true;
+                agent.pre_authkey_path = "/secret/headplane-preauth-key";
               };
               server = {
                 cookie_secure = true;

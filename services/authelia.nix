@@ -21,6 +21,8 @@
     };
   };
   config = lib.mkIf config.nix-tun.services.authelia.enable {
+    services.traefik.dynamicConfigOptions.http.middlewares.authelia-auth.forwardAuth.address = "https://${config.nix-tun.services.authelia.domain}";
+
     nix-tun.utils.containers.authelia = {
       domains = {
         "authelia" = {
@@ -63,6 +65,7 @@
             server.address = "tcp://:9091/";
             webauthn = {
               enable_passkey_login = true;
+              experimental_enable_passkey_uv_two_factors = true;
             };
             authentication_backend = {
               file.path = "/config/users_database.yml";

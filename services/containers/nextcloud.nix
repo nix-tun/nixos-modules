@@ -34,11 +34,17 @@
     in
     lib.mkIf opts.enable {
       nix-tun.utils.containers.spreed-signaling = {
-        secrets = [
-          "server-conf"
-          "blockkey"
-          "hashkey"
-        ];
+        secrets = {
+          "server-conf" = {
+            owner = "nextcloud-spreed-signaling";
+          };
+          "blockkey" = {
+            owner = "nextcloud-spreed-signaling";
+          };
+          "hashkey" = {
+            owner = "nextcloud-spreed-signaling";
+          };
+        };
 
         domains.signaling = {
           domain = "signaling.${opts.hostname}";

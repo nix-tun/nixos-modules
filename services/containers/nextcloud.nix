@@ -101,7 +101,7 @@
 
           services.nextcloud = {
             enable = true;
-            package = pkgs.nextcloud33;
+            package = pkgs.nextcloud34;
             https = true;
             hostName = opts.hostname;
             phpExtraExtensions = all: [ all.pdlib all.smbclient ];

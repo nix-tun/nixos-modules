@@ -71,6 +71,7 @@
           client_secret = "$$__file{/secret/client-secret}";
           auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorize";
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
+          auto_login = true;
         };
 
         nix-tun.services.traefik.services."grafana-prometheus" = {
@@ -241,7 +242,7 @@
                     root_url = "https://${config.nix-tun.services.grafana.domain}";
                   };
                   "auth.basic".enable = false;
-                  auth.disable_login_form = true;
+                  #auth.disable_login_form = true;
                   "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
                 };
               };

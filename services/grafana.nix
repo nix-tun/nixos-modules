@@ -60,7 +60,7 @@
         };
 
         nix-tun.services.authelia.clients."grafana" = {
-          "redirect_uris" = "https://${config.nix-tun.services.grafana.domain}/login/generic_oauth";
+          "redirect_uris" = [ "https://${config.nix-tun.services.grafana.domain}/login/generic_oauth" ];
         };
 
         nix-tun.services.grafana.oauth = lib.mkIf config.nix-tun.services.authelia.enable {

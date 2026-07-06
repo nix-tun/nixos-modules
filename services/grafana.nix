@@ -71,6 +71,7 @@
           client_secret = "$__file{/secret/client-secret}";
           auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorization";
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
+          token_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/token";
           auto_login = true;
         };
 

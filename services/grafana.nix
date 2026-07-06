@@ -69,7 +69,7 @@
           login_attribute_path = "sub";
           client_id = "grafana";
           client_secret = "$__file{/secret/client-secret}";
-          auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorize";
+          auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorization";
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
           auto_login = true;
         };

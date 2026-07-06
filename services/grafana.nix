@@ -53,15 +53,10 @@
   config = lib.mkIf config.nix-tun.services.grafana.enable
     (
       {
-        nix-tun.services.traefik.services."grafana-grafana" = {
-          router.tls.enable = false;
-        };
-
         nix-tun.services.traefik.services."grafana-loki" = {
           router.middlewares = [
             "loki-basic-auth"
           ];
-          router.tls.enable = false;
         };
 
 
@@ -69,7 +64,6 @@
           router.middlewares = [
             "prometheus-basic-auth"
           ];
-          router.tls.enable = false;
         };
 
 

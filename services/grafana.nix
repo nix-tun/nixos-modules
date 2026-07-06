@@ -68,7 +68,7 @@
           scopes = "openid profile email";
           login_attribute_path = "sub";
           client_id = "grafana";
-          client_secret = "$$__file{/secret/client-id}";
+          client_secret = "$$__file{/secret/client-secret}";
           auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorize";
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
         };
@@ -119,7 +119,7 @@
             };
           };
           secrets = lib.mkIf config.nix-tun.services.authelia.enable {
-            "client-id" = {
+            "client-secret" = {
               owner = "grafana";
             };
           };

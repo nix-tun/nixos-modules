@@ -59,6 +59,19 @@
           ];
         };
 
+        nix-tun.services.authelia.clients."grafana" = {
+          "redirect_uris" = "https://${config.nix-tun.services.grafana.domain}/login/generic_oauth";
+        };
+
+        nix-tun.services.grafana.oauth = lib.mkIf config.nix-tun.services.authelia.enable {
+          enable = true;
+          scopes = "openid profile email";
+          login_attribute_path = "sub";
+          client_id = "grafana";
+          client_secret = "$$__file{/secret/client-id}";
+          auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorize";
+          api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
+        };
 
         nix-tun.services.traefik.services."grafana-prometheus" = {
           router.middlewares = [
@@ -103,6 +116,11 @@
             };
             "/var/lib/loki" = {
               owner = "loki";
+            };
+          };
+          secrets = lib.mkIf config.nix-tun.services.authelia.enable {
+            "client-id" = {
+              owner = "grafana";
             };
           };
           domains = {

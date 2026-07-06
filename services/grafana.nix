@@ -64,7 +64,7 @@
         };
 
         nix-tun.services.grafana.oauth = lib.mkIf config.nix-tun.services.authelia.enable {
-          enable = true;
+          enabled = true;
           scopes = "openid profile email";
           login_attribute_path = "sub";
           client_id = "grafana";
@@ -242,7 +242,7 @@
                     root_url = "https://${config.nix-tun.services.grafana.domain}";
                   };
                   "auth.basic".enable = false;
-                  #auth.disable_login_form = true;
+                  auth.disable_login_form = true;
                   "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
                 };
               };

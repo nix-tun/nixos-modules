@@ -65,7 +65,7 @@
 
         nix-tun.services.grafana.oauth = lib.mkIf config.nix-tun.services.authelia.enable {
           enabled = true;
-          scopes = "openid profile email";
+          scopes = "openid profile email groups";
           login_attribute_path = "sub";
           client_id = "grafana";
           client_secret = "$__file{/secret/client-secret}";

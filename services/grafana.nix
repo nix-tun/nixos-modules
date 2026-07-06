@@ -72,6 +72,7 @@
           auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorization";
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
           token_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/token";
+          role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'";
           auto_login = true;
         };
 

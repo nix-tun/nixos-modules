@@ -73,7 +73,8 @@
           api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
           token_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/token";
           groups_attribute_path = "groups";
-          role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'";
+          allow_assign_grafana_admin = true;
+          role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'";
           auto_login = true;
         };
 

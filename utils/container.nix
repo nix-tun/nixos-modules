@@ -315,6 +315,8 @@
                     config = {
                       # Set the correct owner, group and mode for the volumes 
                       systemd.tmpfiles.rules = (lib.attrsets.mapAttrsToList (n: v: "d ${v.mode} ${v.owner} ${v.group} -") value.volumes);
+                      # Enable nix flakes and commands
+                      nix.settings.extra-experimental-features = [ "nix-command" "flakes" ];
                       # Disable Firewall for specific Ports
                       networking.firewall =
                         let

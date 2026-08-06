@@ -1,9 +1,8 @@
-{
-  lib,
-  config,
-  inputs,
-  pkgs,
-  ...
+{ lib
+, config
+, inputs
+, pkgs
+, ...
 }: {
   options.nix-tun.services.containers.authentik = {
     enable = lib.mkEnableOption "setup authentik";
@@ -11,18 +10,18 @@
       type = lib.types.str;
     };
     mail = {
-        host = lib.mkOption {
-	  type = lib.types.str;
-	};
-	port = lib.mkOption {
-	  type = lib.types.int;
-	};
-	username = lib.mkOption {
-	  type = lib.types.str;
-	};
-	from = lib.mkOption {
-	  type = lib.types.str;
-	};
+      host = lib.mkOption {
+        type = lib.types.str;
+      };
+      port = lib.mkOption {
+        type = lib.types.int;
+      };
+      username = lib.mkOption {
+        type = lib.types.str;
+      };
+      from = lib.mkOption {
+        type = lib.types.str;
+      };
     };
     envFile = lib.mkOption {
       type = lib.types.path;
@@ -30,9 +29,10 @@
     };
   };
 
-  config = let
-    opts = config.nix-tun.services.containers.authentik;
-  in
+  config =
+    let
+      opts = config.nix-tun.services.containers.authentik;
+    in
     lib.mkIf opts.enable {
       sops.secrets.authentik_env = {
         sopsFile = opts.envFile;
@@ -46,18 +46,18 @@
         };
       };
 
-      nix-tun.services.traefik.services."authentik" = {
-        router.rule = "Host(`${opts.hostname}`)";
-        servers = ["http://${config.containers.authentik.config.networking.hostName}"];
-      };
-
       containers.authentik = {
         ephemeral = true;
         autoStart = true;
         privateNetwork = true;
         hostAddress = "192.168.111.10";
         localAddress = "192.168.111.11";
-
+        domains = {
+          "authentik" = {
+            domain = opts.hostname;
+            port = 80;
+          };
+        };
         bindMounts = {
           "secret" = {
             hostPath = config.sops.secrets.authentik_env.path;
@@ -65,7 +65,7 @@
           };
         };
 
-        config = {...}: {
+        config = { ... }: {
           imports = [
             inputs.authentik-nix.nixosModules.default
           ];
@@ -100,7 +100,7 @@
           networking = {
             firewall = {
               enable = true;
-              allowedTCPPorts = [80 9443];
+              allowedTCPPorts = [ 80 9443 ];
             };
             # Use systemd-resolved inside the container
             # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686

@@ -24,14 +24,18 @@
     let
       cfg = config.nix-tun.services.headscale;
       authelia = config.nix-tun.services.authelia;
+      url = config.contracts.reverseProxy.responder."${config.contracts.reverseProxy.defaultResponder}".response.container-headscale-headscale.externalUrl;
     in
     lib.mkIf cfg.enable {
-      nix-tun.services.authelia.clients.headscale-headplane = {
-        redirect_uris = [ "https://${cfg.domain}/admin/oidc/callback" ];
-      };
-
-      nix-tun.services.authelia.clients.headscale = {
-        redirect_uris = [ "https://${cfg.domain}/oidc/callback" ];
+      contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".request = {
+        headscale-headplane = {
+          clientId = "headscale-headplane";
+          redirectUris = [ "${url}/admin/oidc/callback" ];
+        };
+        headscale = {
+          clientId = "headscale";
+          redirectUris = [ "${url}/oidc/callback" ];
+        };
       };
 
       nix-tun.utils.containers.headscale = {
@@ -97,22 +101,22 @@
               oidc = {
                 client_id = "headscale-headplane";
                 disable_api_key_login = true;
-                headscale_api_key_path = "/secret/headplane-headscale-api";
                 client_secret_path = "/secret/headplane-oidc-client-secret";
                 issuer = "https://${authelia.domain}";
                 token_endpoint_auth_method = "client_secret_basic";
               };
               headscale = {
+                api_key_path = "/secret/headplane-headscale-api";
                 config_path = config.services.headscale.configFile;
                 url = "https://${cfg.domain}";
               };
               integration = {
                 proc.enabled = true;
                 agent.enabled = true;
-                agent.pre_authkey_path = "/secret/headplane-preauth-key";
               };
               server = {
                 cookie_secure = true;
+                base_url = "https://${cfg.domain}";
                 host = "0.0.0.0";
                 cookie_secret_path = "/secret/headplane-cookie-secret";
               };

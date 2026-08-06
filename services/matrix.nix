@@ -21,11 +21,6 @@
         mode = "444";
       };
 
-      nix-tun.services.traefik.services."{opts.servername}" = {
-        router.rule = "Host(`matrix.${opts.servername}`) || (Host(`${opts.servername}`) && (Path(`/_matrix/{name:.*}`) || Path(`/_synapse/{name:.*}`) || Path(`/.well-known/matrix/server`) || Path(`/.well-known/matrix/client`)))";
-        servers = [ "http://${config.containers."matrix-${opts.servername}".config.networking.hostName}:8008" ];
-      };
-
       nix-tun.utils.containers."matrix-${opts.servername}".volumes = {
         "postgres" = {
           path = "/var/lib/postgres";
@@ -44,6 +39,28 @@
           "secret" = {
             hostPath = config.sops.secrets.matrix_pass.path;
             mountPoint = "${config.sops.secrets.matrix_pass.path}:idmap";
+          };
+        };
+
+        domains = {
+          "matrix-main" = {
+            domain = "matrix.${opts.servername}";
+            port = 8008;
+          };
+          "matrix-synapse" = {
+            domain = opts.servername;
+            port = 8008;
+            path = "/_synapse/";
+          };
+          "matrix-matrix" = {
+            domain = opts.servername;
+            port = 8008;
+            path = "/_matrix/";
+          };
+          "matrix-wellknown" = {
+            domain = opts.servername;
+            port = 8008;
+            path = "/.well-known/matrix";
           };
         };
 
@@ -100,7 +117,7 @@
               };
             };
             # enable coturn
-            services.coturn = rec {
+            services.coturn = {
               enable = true;
               no-cli = true;
               no-tcp-relay = true;

@@ -6,12 +6,6 @@
         description = "The domain from which grafana should be reached";
         type = lib.types.str;
       };
-      oauth = lib.mkOption {
-        type = lib.types.attrs;
-        description = ''
-          The o-auth options for grafana. For reference: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/
-        '';
-      };
       loki = {
         domain = lib.mkOption {
           type = lib.types.str;
@@ -53,37 +47,27 @@
   config = lib.mkIf config.nix-tun.services.grafana.enable
     (
       {
-        nix-tun.services.traefik.services."grafana-loki" = {
-          router.middlewares = [
-            "loki-basic-auth"
-          ];
-        };
+        #nix-tun.services.traefik.services."grafana-loki" = {
+        #  router.middlewares = [
+        #    "loki-basic-auth"
+        #  ];
+        #};
 
-        nix-tun.services.authelia.clients."grafana" = {
-          "redirect_uris" = [ "https://${config.nix-tun.services.grafana.domain}/login/generic_oauth" ];
-        };
+        #nix-tun.services.traefik.services."grafana-prometheus" = {
+        #  router.middlewares = [
+        #    "prometheus-basic-auth"
+        #  ];
+        #};
 
-        nix-tun.services.grafana.oauth = lib.mkIf config.nix-tun.services.authelia.enable {
-          enabled = true;
-          scopes = "openid profile email groups";
-          login_attribute_path = "sub";
-          client_id = "grafana";
-          client_secret = "$__file{/secret/client-secret}";
-          auth_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/authorization";
-          api_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/userinfo";
-          token_url = "https://${config.nix-tun.services.authelia.domain}/api/oidc/token";
-          groups_attribute_path = "groups";
-          allow_assign_grafana_admin = true;
-          role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'";
-          auto_login = true;
-        };
+        #services.traefik.dynamicConfigOptions.http = {
+        #  middlewares."loki-basic-auth".basicAuth = {
+        #    usersFile = config.sops.templates."loki-basic-auth".path;
+        #  };
 
-        nix-tun.services.traefik.services."grafana-prometheus" = {
-          router.middlewares = [
-            "prometheus-basic-auth"
-          ];
-        };
-
+        #  middlewares."prometheus-basic-auth".basicAuth = {
+        #    usersFile = config.sops.templates."prometheus-basic-auth".path;
+        #  };
+        #};
 
         sops.secrets."prometheus-password" = { };
         sops.templates."prometheus-basic-auth" = {
@@ -101,14 +85,10 @@
           '';
         };
 
-        services.traefik.dynamicConfigOptions.http = {
-          middlewares."loki-basic-auth".basicAuth = {
-            usersFile = config.sops.templates."loki-basic-auth".path;
-          };
-
-          middlewares."prometheus-basic-auth".basicAuth = {
-            usersFile = config.sops.templates."prometheus-basic-auth".path;
-          };
+        contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".request.grafana = {
+          clientId = "grafana";
+          redirectUris = [ "https://${config.nix-tun.services.grafana.domain}/oidc/callback" ];
+          scopes = [ "openid" "profile" "email" "groups" ];
         };
 
         nix-tun.utils.containers.grafana = {
@@ -247,7 +227,20 @@
                   };
                   "auth.basic".enable = false;
                   auth.disable_login_form = true;
-                  "auth.generic_oauth" = config.nix-tun.services.grafana.oauth;
+                  "auth.generic_oauth" = let oidc = config.contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".response.grafana; in {
+                    enabled = true;
+                    scopes = "openid profile email groups";
+                    login_attribute_path = "sub";
+                    client_id = "grafana";
+                    client_secret = "$__file{/secret/client-secret}";
+                    auth_url = oidc.authUrl;
+                    api_url = oidc.userInfoUrl;
+                    token_url = oidc.tokenUrl;
+                    groups_attribute_path = "groups";
+                    allow_assign_grafana_admin = true;
+                    role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'";
+                    auto_login = true;
+                  };
                 };
               };
             networking.firewall.allowedTCPPorts = [ 3000 3100 ];

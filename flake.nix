@@ -32,6 +32,7 @@
             (lib.filesystem.listFilesRecursive ./storage)
           ])) ++
         [
+          ./contracts/default.nix
           ./yubikey-gpg.nix
           inputs.impermanence.nixosModules.impermanence
         ];

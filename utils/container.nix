@@ -179,36 +179,28 @@
               As resolved is used to resolve container hostnames. With the help of LLMNR.
             '';
           }
-          {
-            assertion = (config.sops.useTmpfs);
-            message = ''
-              Nix-Tun containers require `services.sops.useTmpfs` to be enabled.
-              As tmpfs is needed to idmap secrets.
-            '';
-          }
         ];
 
         networking.firewall.interfaces."vz-container".allowedUDPPorts = [ 53 67 5355 ];
         networking.firewall.interfaces."vz-container".allowedTCPPorts = [ 53 67 5355 ];
 
-        sops.secrets =
-          (lib.mkMerge
-            (lib.lists.flatten
-              (lib.attrsets.mapAttrsToList
-                (name: value: (if ((lib.types.listOf lib.types.str).check value.secrets) then
-                  (lib.lists.map (secret: { "${name}-${secret}" = { owner = "root"; group = "root"; mode = "0400"; }; }) value.secrets)
-                else
-                  (lib.attrsets.mapAttrsToList
-                    (n: v: {
-                      "${name}-${n}" = {
-                        uid = config.containers.${name}.config.users.users.${v.owner}.uid;
-                        gid = config.containers.${name}.config.users.groups.${v.group}.gid;
-                        mode = v.mode;
-                      };
-                    })
-                    value.secrets)
-                ))
-                config.nix-tun.utils.containers)));
+        contracts.secret.responder.${config.contracts.secret.defaultResponder}.request = (lib.mkMerge
+          (lib.lists.flatten
+            (lib.attrsets.mapAttrsToList
+              (name: value: (if ((lib.types.listOf lib.types.str).check value.secrets) then
+                (lib.lists.map (secret: { "${name}-${secret}" = { owner = "root"; group = "root"; mode = "0400"; }; }) value.secrets)
+              else
+                (lib.attrsets.mapAttrsToList
+                  (n: v: {
+                    "${name}-${n}" = {
+                      owner = config.containers.${name}.config.users.users.${v.owner}.uid;
+                      group = config.containers.${name}.config.users.groups.${v.group}.gid;
+                      mode = v.mode;
+                    };
+                  })
+                  value.secrets)
+              ))
+              config.nix-tun.utils.containers)));
 
         nix-tun.storage.persist.subvolumes =
           lib.attrsets.mapAttrs'
@@ -232,52 +224,33 @@
             })
             config.nix-tun.utils.containers;
 
-        nix-tun.services.traefik = (lib.mkMerge
-          (lib.attrsets.mapAttrsToList
-            (name: container:
-              {
-                entrypoints = (lib.listToAttrs (lib.lists.map
-                  (v: {
-                    name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
-                    value = {
-                      port = v.hostPort;
-                      protocol = v.protocol;
-                    };
-                  })
-                  container.exposedPorts));
-
-                services = (lib.mkMerge [
-                  (lib.listToAttrs (lib.lists.map
-                    (v: {
-                      name = "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
-                      value = {
-                        protocol = v.protocol;
-                        router.entryPoints = [ "container-${name}-${v.protocol}-${builtins.toString v.hostPort}-${builtins.toString v.port}" ];
-                        router.tls.enable = false;
-                        servers = [ "${name}:${builtins.toString v.port}" ];
-                      };
-                    })
-                    container.exposedPorts))
-                  (lib.attrsets.mapAttrs'
-                    (domain-name: domain-value: {
-                      name = "${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
-                      value = {
-                        router = {
-                          rule = "Host(`${domain-value.domain}`) && PathPrefix(`${domain-value.path}`)";
-                          priority = lib.stringLength domain-value.path;
-                          entryPoints = domain-value.entryPoints;
-                        };
-                        healthcheck = lib.mkIf (domain-value.healthcheck != null) {
-                          enable = true;
-                          path = domain-value.healthcheck;
-                        };
-                        servers = [ "http://${name}:${builtins.toString domain-value.port}" ];
-                      };
-                    })
-                    container.domains)
-                ]);
+        contracts.reverseProxy.responder."${config.contracts.reverseProxy.defaultResponder}".request = (lib.mkMerge
+          ((lib.attrsets.mapAttrsToList
+            (name: container: lib.attrsets.mapAttrs'
+              (domain-name: v: {
+                name = "container-${name}-${builtins.replaceStrings ["." "/"] ["-" "-"] domain-name}";
+                value = {
+                  domain = v.domain;
+                  path = v.path;
+                  protocol = "https";
+                  port = 443;
+                  internalUrl = "http://${name}:${builtins.toString v.port}";
+                };
               })
-            config.nix-tun.utils.containers));
+              container.domains)
+            config.nix-tun.utils.containers) ++
+          (lib.attrsets.mapAttrsToList
+            (name: container: (lib.listToAttrs (lib.lists.map
+              (v: {
+                name = "container-${name}-${builtins.toString v.hostPort}-${builtins.toString v.port}";
+                value = {
+                  protocol = v.protocol;
+                  port = v.port;
+                  internalUrl = "${v.protocol}://${name}:${builtins.toString v.port}";
+                };
+              })
+              container.exposedPorts)))
+            config.nix-tun.utils.containers)));
 
         containers =
           lib.attrsets.mapAttrs
@@ -305,9 +278,9 @@
                 # This maps the owner of the directory inside the container to the owner of the directory outside the container
                 (lib.attrsets.mapAttrsToList (n: v: "--bind=${config.nix-tun.storage.persist.subvolumes."containers/${name}".path}/${n}:${n}${lib.optionalString (config.containers."${name}".privateUsers == "pick") ":idmap"}") value.volumes)
                 (lib.mkIf ((lib.types.listOf lib.types.str).check value.secrets)
-                  (lib.lists.map (secret: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}${lib.optionalString (config.containers."${name}".privateUsers == "pick") ":idmap"}") value.secrets))
+                  (lib.lists.map (secret: "--bind=${config.contracts.secret.responder.${config.contracts.secret.defaultResponder}.response."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets))
                 (lib.mkIf (lib.types.attrs.check value.secrets)
-                  (lib.attrsets.mapAttrsToList (secret: v: "--bind=${config.sops.secrets."${name}-${secret}".path}:/secret/${secret}${lib.optionalString (config.containers."${name}".privateUsers == "pick") ":idmap"}") value.secrets))
+                  (lib.attrsets.mapAttrsToList (secret: v: "--bind=${config.contracts.secret.responder.${config.contracts.secret.defaultResponder}.response."${name}-${secret}".path}:/secret/${secret}:idmap") value.secrets))
               ];
               config = lib.mkMerge
                 [

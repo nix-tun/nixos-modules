@@ -44,208 +44,213 @@
     };
   };
 
-  config = lib.mkIf config.nix-tun.services.grafana.enable
-    (
-      {
-        #nix-tun.services.traefik.services."grafana-loki" = {
-        #  router.middlewares = [
-        #    "loki-basic-auth"
-        #  ];
-        #};
+  config = lib.mkIf config.nix-tun.services.grafana.enable {
+    #nix-tun.services.traefik.services."grafana-loki" = {
+    #  router.middlewares = [
+    #    "loki-basic-auth"
+    #  ];
+    #};
 
-        #nix-tun.services.traefik.services."grafana-prometheus" = {
-        #  router.middlewares = [
-        #    "prometheus-basic-auth"
-        #  ];
-        #};
+    #nix-tun.services.traefik.services."grafana-prometheus" = {
+    #  router.middlewares = [
+    #    "prometheus-basic-auth"
+    #  ];
+    #};
 
-        #services.traefik.dynamicConfigOptions.http = {
-        #  middlewares."loki-basic-auth".basicAuth = {
-        #    usersFile = config.sops.templates."loki-basic-auth".path;
-        #  };
+    #services.traefik.dynamicConfigOptions.http = {
+    #  middlewares."loki-basic-auth".basicAuth = {
+    #    usersFile = config.sops.templates."loki-basic-auth".path;
+    #  };
 
-        #  middlewares."prometheus-basic-auth".basicAuth = {
-        #    usersFile = config.sops.templates."prometheus-basic-auth".path;
-        #  };
-        #};
+    #  middlewares."prometheus-basic-auth".basicAuth = {
+    #    usersFile = config.sops.templates."prometheus-basic-auth".path;
+    #  };
+    #};
 
-        sops.secrets."prometheus-password" = { };
-        sops.templates."prometheus-basic-auth" = {
-          owner = "traefik";
-          content = ''
-            prometheus:${config.sops.placeholder.prometheus-password}
-          '';
+    sops.secrets."prometheus-password" = { };
+    sops.templates."prometheus-basic-auth" = {
+      owner = "traefik";
+      content = ''
+        prometheus:${config.sops.placeholder.prometheus-password}
+      '';
+    };
+
+    sops.secrets."loki-password" = { };
+    sops.templates."loki-basic-auth" = {
+      owner = "traefik";
+      content = ''
+        loki:${config.sops.placeholder.loki-password}
+      '';
+    };
+
+    contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".request.grafana = {
+      clientId = "grafana";
+      redirectUris = [ "https://${config.nix-tun.services.grafana.domain}/oidc/callback" ];
+      scopes = [ "openid" "profile" "email" "groups" ];
+    };
+
+    contracts.reverseProxy.responder."${config.contracts.reverseProxy.defaultResponder}".request."container-grafana-prometheus" = {
+      authType = "basicAuth";
+      authOptions = {
+        user = "prometheus";
+        password.requester = "${config.contracts.secret.defaultProvider}";
+      };
+    };
+
+    nix-tun.utils.containers.grafana = {
+      volumes = {
+        "/var/lib/grafana" = {
+          owner = "grafana";
         };
-
-        sops.secrets."loki-password" = { };
-        sops.templates."loki-basic-auth" = {
-          owner = "traefik";
-          content = ''
-            loki:${config.sops.placeholder.loki-password}
-          '';
+        "/var/lib/prometheus2" = {
+          owner = "prometheus";
         };
-
-        contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".request.grafana = {
-          clientId = "grafana";
-          redirectUris = [ "https://${config.nix-tun.services.grafana.domain}/oidc/callback" ];
-          scopes = [ "openid" "profile" "email" "groups" ];
+        "/var/lib/loki" = {
+          owner = "loki";
         };
-
-        nix-tun.utils.containers.grafana = {
-          volumes = {
-            "/var/lib/grafana" = {
-              owner = "grafana";
+      };
+      secrets = lib.mkIf config.nix-tun.services.authelia.enable {
+        "client-secret" = {
+          owner = "grafana";
+        };
+      };
+      domains = {
+        grafana = {
+          domain = config.nix-tun.services.grafana.domain;
+          port = 3000;
+        };
+        prometheus = {
+          domain = config.nix-tun.services.grafana.prometheus.domain;
+          port = 9000;
+        };
+        loki = {
+          domain = config.nix-tun.services.grafana.loki.domain;
+          port = 3100;
+        };
+      };
+      config = { ... }: {
+        boot.isContainer = true;
+        services.loki = {
+          enable = true;
+          configuration = {
+            auth_enabled = true;
+            server = {
+              http_listen_port = 3100;
             };
-            "/var/lib/prometheus2" = {
-              owner = "prometheus";
-            };
-            "/var/lib/loki" = {
-              owner = "loki";
-            };
-          };
-          secrets = lib.mkIf config.nix-tun.services.authelia.enable {
-            "client-secret" = {
-              owner = "grafana";
-            };
-          };
-          domains = {
-            grafana = {
-              domain = config.nix-tun.services.grafana.domain;
-              port = 3000;
-            };
-            prometheus = {
-              domain = config.nix-tun.services.grafana.prometheus.domain;
-              port = 9000;
-            };
-            loki = {
-              domain = config.nix-tun.services.grafana.loki.domain;
-              port = 3100;
-            };
-          };
-          config = { ... }: {
-            boot.isContainer = true;
-            services.loki = {
-              enable = true;
-              configuration = {
-                auth_enabled = true;
-                server = {
-                  http_listen_port = 3100;
-                };
-                # The Ammount of Virtual Memory to reserve as ballast 
-                # A higher ammount will reduce Garbage Collection Overhead
-                ballast_bytes = 1024 * 1024;
-                ingester = {
-                  lifecycler = {
-                    address = "0.0.0.0";
-                    ring = {
-                      kvstore = {
-                        store = "inmemory";
-                      };
-                      replication_factor = 1;
-                    };
-                    final_sleep = "0s";
+            # The Ammount of Virtual Memory to reserve as ballast 
+            # A higher ammount will reduce Garbage Collection Overhead
+            ballast_bytes = 1024 * 1024;
+            ingester = {
+              lifecycler = {
+                address = "0.0.0.0";
+                ring = {
+                  kvstore = {
+                    store = "inmemory";
                   };
-                  chunk_idle_period = "1h"; # Any chunk not receiving new logs in this time will be flushed
-                  max_chunk_age = "2h"; # All chunks will be flushed when they hit this age, default is 1h
-                  chunk_target_size = 1048576; # Loki will attempt to build chunks up to 1.5MB, flushing first if chunk_idle_period or max_chunk_age is reached first
-                  chunk_retain_period = "30m"; # Must be greater than index read cache TTL if using an index cache (Default index read cache TTL is 5m)
+                  replication_factor = 1;
                 };
-                schema_config = {
-                  configs = [
-                    {
-                      from = "1970-01-01";
-                      store = "tsdb";
-                      object_store = "filesystem";
-                      schema = "v13";
-                      index = {
-                        prefix = "index/";
-                        period = "24h";
-                      };
-                    }
-                  ];
-                };
-                compactor = {
-                  working_directory = "/var/lib/loki/compactor";
-                };
-                storage_config = {
-                  tsdb_shipper = {
-                    active_index_directory = "/var/lib/loki/tsdb-shipper-active";
-                    cache_location = "/var/lib/loki/tsdb-shipper-cache";
-                    cache_ttl = "24h";
-                  };
-                  filesystem = {
-                    directory = "/var/lib/loki/chunks";
-                  };
-                };
-                limits_config = {
-                  reject_old_samples = true;
-                  reject_old_samples_max_age = "168h";
-                };
-                table_manager = {
-                  retention_deletes_enabled = false;
-                  retention_period = "0s";
-                };
+                final_sleep = "0s";
               };
+              chunk_idle_period = "1h"; # Any chunk not receiving new logs in this time will be flushed
+              max_chunk_age = "2h"; # All chunks will be flushed when they hit this age, default is 1h
+              chunk_target_size = 1048576; # Loki will attempt to build chunks up to 1.5MB, flushing first if chunk_idle_period or max_chunk_age is reached first
+              chunk_retain_period = "30m"; # Must be greater than index read cache TTL if using an index cache (Default index read cache TTL is 5m)
             };
-
-            services.prometheus = {
-              enable = true;
-              port = 9000;
-              extraFlags = [
-                "--web.enable-remote-write-receiver"
+            schema_config = {
+              configs = [
+                {
+                  from = "1970-01-01";
+                  store = "tsdb";
+                  object_store = "filesystem";
+                  schema = "v13";
+                  index = {
+                    prefix = "index/";
+                    period = "24h";
+                  };
+                }
               ];
             };
-
-            services.grafana =
-              let
-                provisionPath = pkgs.runCommand "grafana-provisioning" { } (lib.strings.concatLines
-                  (lib.attrsets.mapAttrsToList
-                    (category: settings: ''
-                      mkdir -p $out
-                      mkdir -p $out/${category}
-                      cp ${(pkgs.formats.yaml {}).generate "${category}.yaml" settings} $out/${category}/${category}.yaml
-                    '')
-                    config.nix-tun.services.grafana.provision));
-              in
-              {
-                enable = true;
-                declarativePlugins = with pkgs.grafanaPlugins;
-                  [
-                    #grafana-synthetic-monitoring-app
-                    grafana-metricsdrilldown-app
-                    grafana-lokiexplore-app
-                    grafana-exploretraces-app
-                    grafana-github-datasource
-                    grafana-oncall-app
-                  ];
-                settings = {
-                  paths.provisioning = provisionPath;
-                  server = {
-                    domain = config.nix-tun.services.grafana.domain;
-                    http_addr = "0.0.0.0";
-                    root_url = "https://${config.nix-tun.services.grafana.domain}";
-                  };
-                  "auth.basic".enable = false;
-                  auth.disable_login_form = true;
-                  "auth.generic_oauth" = let oidc = config.contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".response.grafana; in {
-                    enabled = true;
-                    scopes = "openid profile email groups";
-                    login_attribute_path = "sub";
-                    client_id = "grafana";
-                    client_secret = "$__file{/secret/client-secret}";
-                    auth_url = oidc.authUrl;
-                    api_url = oidc.userInfoUrl;
-                    token_url = oidc.tokenUrl;
-                    groups_attribute_path = "groups";
-                    allow_assign_grafana_admin = true;
-                    role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'";
-                    auto_login = true;
-                  };
-                };
+            compactor = {
+              working_directory = "/var/lib/loki/compactor";
+            };
+            storage_config = {
+              tsdb_shipper = {
+                active_index_directory = "/var/lib/loki/tsdb-shipper-active";
+                cache_location = "/var/lib/loki/tsdb-shipper-cache";
+                cache_ttl = "24h";
               };
-            networking.firewall.allowedTCPPorts = [ 3000 3100 ];
+              filesystem = {
+                directory = "/var/lib/loki/chunks";
+              };
+            };
+            limits_config = {
+              reject_old_samples = true;
+              reject_old_samples_max_age = "168h";
+            };
+            table_manager = {
+              retention_deletes_enabled = false;
+              retention_period = "0s";
+            };
           };
         };
-      }
-    );
+
+        services.prometheus = {
+          enable = true;
+          port = 9000;
+          extraFlags = [
+            "--web.enable-remote-write-receiver"
+          ];
+        };
+
+        services.grafana =
+          let
+            provisionPath = pkgs.runCommand "grafana-provisioning" { } (lib.strings.concatLines
+              (lib.attrsets.mapAttrsToList
+                (category: settings: ''
+                  mkdir -p $out
+                  mkdir -p $out/${category}
+                  cp ${(pkgs.formats.yaml {}).generate "${category}.yaml" settings} $out/${category}/${category}.yaml
+                '')
+                config.nix-tun.services.grafana.provision));
+          in
+          {
+            enable = true;
+            declarativePlugins = with pkgs.grafanaPlugins;
+              [
+                #grafana-synthetic-monitoring-app
+                grafana-metricsdrilldown-app
+                grafana-lokiexplore-app
+                grafana-exploretraces-app
+                grafana-github-datasource
+                grafana-oncall-app
+              ];
+            settings = {
+              paths.provisioning = provisionPath;
+              server = {
+                domain = config.nix-tun.services.grafana.domain;
+                http_addr = "0.0.0.0";
+                root_url = "https://${config.nix-tun.services.grafana.domain}";
+              };
+              "auth.basic".enable = false;
+              auth.disable_login_form = true;
+              "auth.generic_oauth" = let oidc = config.contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".response.grafana; in {
+                enabled = true;
+                scopes = "openid profile email groups";
+                login_attribute_path = "sub";
+                client_id = "grafana";
+                client_secret = "$__file{/secret/client-secret}";
+                auth_url = oidc.authUrl;
+                api_url = oidc.userInfoUrl;
+                token_url = oidc.tokenUrl;
+                groups_attribute_path = "groups";
+                allow_assign_grafana_admin = true;
+                role_attribute_path = "contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor'";
+                auto_login = true;
+              };
+            };
+          };
+        networking.firewall.allowedTCPPorts = [ 3000 3100 ];
+      };
+    };
+  };
 }

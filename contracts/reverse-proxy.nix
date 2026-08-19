@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, config, ... }:
 let
   mkOption = type: default: defaultText: (lib.mkOption
     {
@@ -19,10 +19,8 @@ let
     , protocolText ? null
     , internalUrl ? "http://localhost:80"
     , internalUrlText ? null
-    , authType ? null
+    , authType ? "none"
     , authTypeText ? null
-    , authName ? null
-    , authNameText ? null
     }: lib.types.submodule (sub: {
       options = {
         domain = mkOption lib.types.str domain domainText;
@@ -30,8 +28,22 @@ let
         protocol = mkOption (lib.types.enum [ "http" "https" "tcp" "udp" ]) protocol protocolText;
         port = mkOption lib.types.port (if (sub.config.protocol == "https") then 443 else port) portText;
         internalUrl = mkOption lib.types.str internalUrl internalUrlText;
-        authType = mkOption (lib.types.nullOr lib.types.str) authType authTypeText;
-        authName = mkOption (lib.types.nullOr lib.types.str) authName authNameText;
+        authType = mkOption (lib.types.enum [ "none" "basicAuth" ]) authType authTypeText;
+        authOptions = mkOption
+          (lib.types.nullOr (lib.types.submodule (sub: {
+            options = {
+              user = mkOption lib.types.str null null;
+              password = mkOption
+                (lib.types.submodule {
+                  options = {
+                    name = "basic-auth-${sub.config.user}";
+                    responder = config.contracts.secret.defaultResponder;
+                  };
+                });
+            };
+          })))
+          null
+          null;
       };
     });
   defaultName = request: request.internalUrl;

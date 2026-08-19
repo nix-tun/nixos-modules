@@ -158,8 +158,15 @@ in
       (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes);
 
     fileSystems = lib.mkMerge
-      (lib.map (name: { "${name}".fsType = "none"; })
-        (lib.flatten (lib.map (subvolumes: lib.attrsets.attrNames subvolumes.directories) (lib.attrsets.attrValues (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes)))));
+      (lib.mapAttrsToList
+        (name: value: (
+          lib.mapAttrs
+            (name: v: {
+              fsType = "none";
+              device = "${value.path}/${name}";
+            })
+            value.directories))
+        (lib.attrsets.filterAttrs (name: value: value.bindMountDirectories) opts.subvolumes));
 
     # Automatically snapshots the Persistent Subvolumes
     services.btrbk.instances.btrbk = {

@@ -1,8 +1,7 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ config
+, lib
+, pkgs
+, ...
 }: {
   options = {
     nix-tun.yubikey-gpg.enable = lib.mkEnableOption "Enable Yubikey GPG Support";
@@ -18,9 +17,11 @@
       yubikey-personalization
     ];
 
+    services.pcscd.enable = true;
+
     programs.gnupg.agent = {
       enable = true;
-      pinentryPackage = pkgs.pinentry-curses;
+      pinentryPackage = pkgs.pinentry-gnome3;
       enableSSHSupport = true;
     };
 

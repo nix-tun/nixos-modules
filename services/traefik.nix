@@ -35,6 +35,7 @@
         externalUrl = "${value.protocol}://${value.domain}";
       })
       config.contracts.reverseProxy.responder.traefik.request;
+
     environment.etc."alloy/traefik-metrics.alloy" = lib.mkIf (config.nix-tun.alloy.prometheus-host != null && config.nix-tun.services.traefik.enable_prometheus) {
       text = ''
         prometheus.scrape "traefik" {
@@ -62,18 +63,30 @@
       enable = true;
       dynamicConfigOptions = {
         http = {
+          middlewares = lib.mkMerge [
+            (lib.mapAttrs'
+              (name: value: {
+                name = "${name}-basic-auth";
+                value = {
+                  userFile = "";
+                };
+              })
+              (lib.filterAttrs (n: v: v.authType == "basicAuth" && (v.protocol == "http" || v.protocol == "https")) config.contracts.reverseProxy.responder.traefik.request))
+          ];
           routers = lib.mkMerge [
             (lib.attrsets.mapAttrs
               (name: value:
                 lib.mkMerge [
                   {
-                    rule = "Host(`${value.domain}`) & PathPrefix(`${value.path}`)";
-                    #middlewares = value.router.middlewares;
+                    rule = "Host(`${value.domain}`) && PathPrefix(`${value.path}`)";
                     service = name;
                     entryPoints = "tcp-${toString value.port}";
                   }
                   (lib.mkIf (value.protocol == "https") {
                     tls.certResolver = "letsencrypt";
+                  })
+                  (lib.mkIf (value.authType == "basicAuth") {
+                    middlewares = [ "${name}-basic-auth" ];
                   })
                 ])
               (lib.attrsets.filterAttrs
@@ -91,8 +104,8 @@
           services =
             lib.attrsets.mapAttrs
               (name: value: {
-                loadBalancer = lib.mkMerge [{
-                  servers.url = [ value.internalUrl ];
+                loadBalancer.servers = [{
+                  url = value.internalUrl;
                 }];
               })
               (lib.attrsets.filterAttrs
@@ -126,7 +139,9 @@
 
             services = lib.attrsets.mapAttrs
               (name: value: {
-                loadBalancer.servers.address = [ value.internalUrl ];
+                loadBalancer.servers = [{
+                  url = value.internalUrl;
+                }];
               })
               (lib.attrsets.filterAttrs
                 (n: v: v.protocol == "tcp")
@@ -149,7 +164,9 @@
 
             services = lib.attrsets.mapAttrs
               (name: value: {
-                loadBalancer.servers.address = [ value.internalUrl ];
+                loadBalancer.servers = [{
+                  url = value.internalUrl;
+                }];
               })
               (lib.attrsets.filterAttrs
                 (n: v: v.protocol == "udp")
@@ -179,8 +196,7 @@
               (name: value: {
                 name = "${if value.protocol == "udp" then "udp" else "tcp"}-${toString value.port}";
                 value = {
-                  address = ":${toString value.port}/${toString value.port}";
-                  protocol = if value.protocol == "udp" then "udp" else "tcp";
+                  address = ":${toString value.port}/${if value.protocol == "udp" then "udp" else "tcp"}";
                 };
               })
               config.contracts.reverseProxy.responder.traefik.request;

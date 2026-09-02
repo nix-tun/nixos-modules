@@ -1,6 +1,7 @@
 { lib
 , config
 , pkgs
+, inputs
 , ...
 }@host: {
   # Utils to make the configuration of NixOs Containers more streamlined, in Context of the entire flake.
@@ -14,6 +15,7 @@
                 {
                   type = lib.types.deferredModuleWith {
                     staticModules = [
+                      inputs.nix-topology.nixosModules.default
                       ({ ... }: {
                         config = {
                           boot.isContainer = true;
@@ -27,6 +29,13 @@
                           systemd.network.enable = true;
                           systemd.settings.Manager = {
                             DefaultLimitNOFILE = "8192:524288";
+                          };
+                          systemd.network.networks."10-host0" = {
+                            matchConfig = { Name = "host0"; };
+                            networkConfig = {
+                              DHCP = "ipv4";
+                              IPv6AcceptRA = true;
+                            };
                           };
                         };
                       })
@@ -270,7 +279,8 @@
               privateUsers = "pick";
               extraFlags = lib.mkMerge [
                 [
-                  "--network-zone=container"
+                  #"--network-zone=container"
+                  "--network-bridge=br0"
                   "--resolv-conf=bind-stub"
                   "--uuid=${builtins.hashString "md5" name}"
                   "--bind=${config.nix-tun.storage.persist.subvolumes."containers/${name}".path}/log:/var/log/journal/${builtins.hashString "md5" name}${lib.optionalString (config.containers."${name}".privateUsers == "pick") ":idmap"}"

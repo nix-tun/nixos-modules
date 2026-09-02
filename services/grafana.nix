@@ -85,17 +85,17 @@
 
     contracts.oauth.responder."${config.contracts.oauth.defaultResponder}".request.grafana = {
       clientId = "grafana";
-      redirectUris = [ "https://${config.nix-tun.services.grafana.domain}/oidc/callback" ];
+      redirectUris = [ "https://${config.nix-tun.services.grafana.domain}/login/generic_oauth" ];
       scopes = [ "openid" "profile" "email" "groups" ];
     };
 
-    contracts.reverseProxy.responder."${config.contracts.reverseProxy.defaultResponder}".request."container-grafana-prometheus" = {
-      authType = "basicAuth";
-      authOptions = {
-        user = "prometheus";
-        password.requester = "${config.contracts.secret.defaultProvider}";
-      };
-    };
+    #contracts.reverseProxy.responder."${config.contracts.reverseProxy.defaultResponder}".request."container-grafana-prometheus" = {
+    #  authType = "basicAuth";
+    #  authOptions = {
+    #    user = "prometheus";
+    #    password.requester = "${config.contracts.secret.defaultProvider}";
+    #  };
+    #};
 
     nix-tun.utils.containers.grafana = {
       volumes = {

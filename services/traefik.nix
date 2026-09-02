@@ -49,8 +49,12 @@
       '';
     };
 
-    networking.firewall.allowedTCPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
-      (lib.attrsets.filterAttrs (name: value: value.protocol == "tcp" || value.protocol == "http" || value.protocol == "https") config.contracts.reverseProxy.responder.traefik.request);
+    networking.firewall.allowedTCPPorts = lib.mkMerge [
+      [ 80 ]
+      (lib.attrsets.mapAttrsToList
+        (name: value: value.port)
+        (lib.attrsets.filterAttrs (name: value: value.protocol == "tcp" || value.protocol == "http" || value.protocol == "https") config.contracts.reverseProxy.responder.traefik.request))
+    ];
 
     networking.firewall.allowedUDPPorts = lib.attrsets.mapAttrsToList (name: value: value.port)
       (lib.attrsets.filterAttrs (name: value: value.protocol == "udp") config.contracts.reverseProxy.responder.traefik.request);
@@ -64,6 +68,9 @@
       dynamicConfigOptions = {
         http = {
           middlewares = lib.mkMerge [
+            {
+              retry.retry.attempts = 2;
+            }
             (lib.mapAttrs'
               (name: value: {
                 name = "${name}-basic-auth";
@@ -192,14 +199,30 @@
               };
             };
 
-            entryPoints = lib.mapAttrs'
-              (name: value: {
-                name = "${if value.protocol == "udp" then "udp" else "tcp"}-${toString value.port}";
-                value = {
-                  address = ":${toString value.port}/${if value.protocol == "udp" then "udp" else "tcp"}";
+            entryPoints = lib.mkMerge [
+              {
+                tcp-80 = {
+                  address = ":80";
+                  http = {
+                    redirections = {
+                      entryPoint = {
+                        to = "tcp-443";
+                        scheme = "https";
+                        permanent = true;
+                      };
+                    };
+                  };
                 };
-              })
-              config.contracts.reverseProxy.responder.traefik.request;
+              }
+              (lib.mapAttrs'
+                (name: value: {
+                  name = "${if value.protocol == "udp" then "udp" else "tcp"}-${toString value.port}";
+                  value = {
+                    address = ":${toString value.port}/${if value.protocol == "udp" then "udp" else "tcp"}";
+                  };
+                })
+                config.contracts.reverseProxy.responder.traefik.request)
+            ];
 
 
             api = {

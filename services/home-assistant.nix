@@ -68,7 +68,7 @@
         "homekit_controller"
         "cloudflare"
         "kodi"
-        "wakeonlan"
+        "wake_on_lan"
       ];
 
       customComponents = with pkgs.home-assistant-custom-components; [

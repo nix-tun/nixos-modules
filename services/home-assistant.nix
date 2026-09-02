@@ -67,7 +67,7 @@
         "nextcloud"
         "homekit_controller"
         "cloudflare"
-        "pykodi"
+        "kodi"
         "wakeonlan"
       ];
 

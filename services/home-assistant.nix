@@ -82,6 +82,7 @@
           internal_url = "https://${config.nix-tun.services.home-assistant.domain}";
         };
         automation = "!include automations.yaml";
+        scripts = "!include scripts.yaml";
         mobile_app = { };
         default_config = { };
         my = { };
@@ -92,6 +93,7 @@
           display_name = "Authelia";
           features = {
             automatic_user_linking = true;
+            default_redirect = true;
           };
         };
       };

@@ -21,6 +21,7 @@
             issuer = url;
             clientSecret = "client-secret-${value.clientId}";
             clientSecretResponder = config.nix-tun.services.authelia.secretResponder;
+            discoveryUrl = "${url}/.well-known/openid-configuration";
             authUrl = "${url}/api/oidc/authorization";
             userInfoUrl = "${url}/api/oidc/userinfo";
             tokenUrl = "${url}/api/oidc/token";
@@ -101,6 +102,7 @@
                       client_id = value.clientId;
                       client_secret = "{{- fileContent \"/secret/client-secret-${value.clientId}\" }}";
                       redirect_uris = value.redirectUris;
+                      token_endpoint_auth_method = value.authMethod;
                     })
                     config.contracts.oauth.responder.authelia.request;
                 };

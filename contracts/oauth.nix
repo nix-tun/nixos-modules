@@ -22,6 +22,7 @@ let
         scopes = mkOption (lib.types.listOf lib.types.str) scopes scopesText;
         clientSecretOwner = mkOption lib.types.str "root" null;
         clientSecretGroup = mkOption lib.types.str "root" null;
+        authMethod = mkOption lib.types.str "client_secret_basic" null;
       };
     };
   mkResponse =
@@ -40,6 +41,7 @@ let
         clientSecret = mkOption lib.types.str clientSecret clientSecretText;
         clientSecretResponder = mkOption lib.types.str null null;
         issuer = mkOption lib.types.str issuer issuerText;
+        discoveryUrl = mkOption lib.types.str null null;
         authUrl = mkOption lib.types.str authUrl authUrlText;
         tokenUrl = mkOption lib.types.str tokenUrl tokenUrlText;
         userInfoUrl = mkOption lib.types.str userInfoUrl userInfoUrlText;

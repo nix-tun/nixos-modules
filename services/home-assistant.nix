@@ -65,6 +65,7 @@
         "thread"
         "jellyfin"
         "nextcloud"
+        "media_player"
         "homekit_controller"
         "cloudflare"
         "kodi"

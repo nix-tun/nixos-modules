@@ -82,7 +82,7 @@
           internal_url = "https://${config.nix-tun.services.home-assistant.domain}";
         };
         automation = "!include automations.yaml";
-        scripts = "!include scripts.yaml";
+        script = "!include scripts.yaml";
         mobile_app = { };
         default_config = { };
         my = { };

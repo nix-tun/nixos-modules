@@ -92,7 +92,6 @@
           display_name = "Authelia";
           features = {
             automatic_user_linking = true;
-            default_redirect = true;
           };
         };
       };

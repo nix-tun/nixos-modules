@@ -281,7 +281,7 @@
                 [
                   #"--network-zone=container"
                   "--network-bridge=br0"
-                  "--resolv-conf=bind-stub"
+                  #"--resolv-conf=bind-stub"
                   "--uuid=${builtins.hashString "md5" name}"
                   "--bind=${config.nix-tun.storage.persist.subvolumes."containers/${name}".path}/log:/var/log/journal/${builtins.hashString "md5" name}${lib.optionalString (config.containers."${name}".privateUsers == "pick") ":idmap"}"
                 ]

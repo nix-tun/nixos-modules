@@ -77,7 +77,6 @@
 
       nix-tun.utils.containers.nextcloud = {
         secrets = [
-          "admin-pass"
           "dbpass"
         ];
         domains.nextcloud = {
@@ -112,7 +111,6 @@
             settings.trusted_proxies = [ "192.168.0.0/16" "172.16.0.0/12" "10.0.0.0/8" ] ++ opts.extraTrustedProxies;
             settings.trusted_domains = [ "nextcloud" opts.hostname ];
             config = {
-              adminpassFile = "/secret/admin-pass";
               dbtype = "mysql";
             };
 
